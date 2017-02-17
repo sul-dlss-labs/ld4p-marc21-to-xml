@@ -4,9 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -24,7 +24,7 @@ class AuthDBProperties {
     private String userPass = null;
 
     public AuthDBProperties() throws IOException {
-        Properties properties = loadPropertyResource();
+        Properties properties = loadPropertyResource(PROPERTY_RESOURCE);
         initDataSourceProperties(properties);
     }
 
@@ -86,13 +86,16 @@ class AuthDBProperties {
         }
     }
 
-    private Properties loadPropertyResource() throws IOException {
+    private Properties loadPropertyResource(String resourceName) throws IOException {
         try {
-            Class cls = AuthDBProperties.class;
-            InputStream iStream = cls.getResourceAsStream(PROPERTY_RESOURCE);
+            InputStream iStream = AuthDBProperties.class.getResourceAsStream(resourceName);
+            if (iStream == null) {
+                // cls.getResourceAsStream() does not throw an IOException when the resource is missing.
+                throw( new FileNotFoundException("Failed to find property resource:" + resourceName) );
+            }
             return loadProperties(iStream);
         } catch (IOException e) {
-            log.fatal("Failed to load property resource:" + PROPERTY_RESOURCE, e);
+            log.fatal("Failed to load property resource:" + resourceName, e);
             throw e;
         }
     }
