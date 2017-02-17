@@ -8,15 +8,13 @@ convert marc21 data into marcxml, with authority ids resolved to URIs via Sympho
 
 ### Compiling and Executing
 
-See Dependencies below for one time setup.
+See One Time Setup below to set up dependencies
 
 To build and package the maven project (assuming maven is installed already):
-```
-mvn package
-```
 
-The resulting packaged JAR includes all dependencies.  The
-packaged JAR can be copied to a convenient location and used on the CLASSPATH or the command line, e.g.
+  `mvn package`
+
+The resulting packaged JAR includes all dependencies.  The packaged JAR can be copied to a convenient location and used on the CLASSPATH or the command line, e.g.
 ```
 $ cp java/target/xform-marc21-to-xml-jar-with-dependencies.jar ~/lib/ld4p_conversion.jar
 $ LD4P_JAR=~/lib/ld4p_conversion.jar
@@ -47,10 +45,32 @@ To update Coveralls from the command line, try:
 mvn clean test cobertura:cobertura coveralls:report -DrepoToken=yourcoverallsprojectrepositorytoken
 ```
 
-### Dependencies / One Time Setup
+## Deployment
 
+Capistrano is used for deployment.
+
+1. On your laptop, run
+
+    `bundle`
+
+  to install the Ruby capistrano gems and other dependencies for deployment.
+
+2. Deploy code to remote VM:
+
+    `cap dev deploy`
+
+  This will also build and package the code on the remote VM with Maven.
+
+3. Run a test marc21 file through the converter to ensure it works on remote VM:
+
+    `cap dev local_test`
+
+## One Time Setup
+
+Dependencies
 - Java 8
 - Maven 3
+- Oracle maven artifact access (see below)
 
 The Oracle JDBC maven artifacts require a license, follow the instructions at:
 - http://docs.oracle.com/middleware/1213/core/MAVEN/config_maven_repo.htm
@@ -77,34 +97,34 @@ credentials to maven settings.  Follow maven instructions to encrypt the passwor
           Password: TYPE_YOUR_PASSWD_HERE
           {JhJfPXeAJm0HU9VwsWngQS5qGreK29EQ3fdm/7Q7A7c=}
 
-  - add this encrypted oracle server password to `~/.m2/settings.xml` using this template:
+  - add this encrypted oracle server password to `~/.m2/settings.xml` as a `server` element using this template:
 
-        <settings>
-          <servers>
-            <server>
-              <id>maven.oracle.com</id>
-              <username>your_oracle_username</username>
-              <password>{JhJfPXeAJm0HU9VwsWngQS5qGreK29EQ3fdm/7Q7A7c=}</password>
-              <configuration>
-                <basicAuthScope>
-                  <host>ANY</host>
-                  <port>ANY</port>
-                  <realm>OAM 11g</realm>
-                </basicAuthScope>
-                <httpConfiguration>
-                  <all>
-                    <params>
-                      <property>
-                        <name>http.protocol.allow-circular-redirects</name>
-                        <value>%b,true</value>
-                      </property>
-                    </params>
-                  </all>
-                </httpConfiguration>
-              </configuration>
-            </server>
-          </servers>
-        </settings>
+          <settings>
+            <servers>
+              <server>
+                <id>maven.oracle.com</id>
+                <username>your_oracle_username</username>
+                <password>{JhJfPXeAJm0HU9VwsWngQS5qGreK29EQ3fdm/7Q7A7c=}</password>
+                <configuration>
+                  <basicAuthScope>
+                    <host>ANY</host>
+                    <port>ANY</port>
+                    <realm>OAM 11g</realm>
+                  </basicAuthScope>
+                  <httpConfiguration>
+                    <all>
+                      <params>
+                        <property>
+                          <name>http.protocol.allow-circular-redirects</name>
+                          <value>%b,true</value>
+                        </property>
+                      </params>
+                    </all>
+                  </httpConfiguration>
+                </configuration>
+              </server>
+            </servers>
+          </settings>
 
 - For additional information about maven settings, see
     - https://maven.apache.org/settings.html
