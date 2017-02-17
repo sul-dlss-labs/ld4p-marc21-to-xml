@@ -35,3 +35,15 @@ append :linked_dirs, 'data', 'log'
 
 # Default value for keep_releases is 5
 # set :keep_releases, 5
+
+# update shared_configs before restarting app
+#before 'deploy:restart', 'shared_configs:update'
+
+namespace :maven do
+  desc 'package'
+  task :package do
+    on roles(:app), in: :sequence do
+      execute "cd #{fetch(:deploy_to)}/current && /usr/local/maven/bin/mvn clean package --settings /opt/app/ld4p/.m2/oracle-settings.xml"
+    end
+  end
+end
