@@ -1,7 +1,6 @@
 package edu.stanford;
 
 import org.apache.commons.io.FileUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +18,6 @@ import java.util.Properties;
 import static java.nio.file.Files.createTempDirectory;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.*;
-
 
 public class AuthDBPropertiesTest {
 
@@ -40,6 +38,11 @@ public class AuthDBPropertiesTest {
         authProps = new AuthDBProperties();
     }
 
+    @After
+    public void tearDown() throws IOException {
+        FileUtils.deleteDirectory(tmpDir);
+    }
+
     public void setServerConfFile() {
         Class cls = AuthDBProperties.class;
         URL path = cls.getResource(serverConfResourceName);
@@ -52,11 +55,6 @@ public class AuthDBPropertiesTest {
         serverConf = new Properties();
         serverConf.load(iStream);
         iStream.close();
-    }
-
-    @After
-    public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(tmpDir);
     }
 
     @Test
@@ -129,5 +127,17 @@ public class AuthDBPropertiesTest {
         new AuthDBProperties(customConfigFile);
     }
 
+    @Test (expected = FileNotFoundException.class)
+    public void testFailureLoadingPropertyResource() throws Throwable {
+        try {
+            // Call private method to load a properties resource that does not exist.
+            Method m = AuthDBProperties.class.getDeclaredMethod("loadPropertyResource", String.class);
+            m.setAccessible(true);
+            m.invoke(authProps, "/missing.conf");
+        } catch(InvocationTargetException e) {
+            // ignore the java reflection exception, throw it's cause
+            throw(e.getTargetException());
+        }
+    }
 }
 
