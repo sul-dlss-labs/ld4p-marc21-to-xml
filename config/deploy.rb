@@ -43,10 +43,11 @@ namespace :maven do
   desc 'package'
   task :package do
     on roles(:app), in: :sequence do
-      execute "cd #{current_path} && /usr/local/maven/bin/mvn clean package --settings /opt/app/ld4p/.m2/oracle-settings.xml"
+      execute "cd #{current_path} && /usr/local/maven/bin/mvn clean package"
     end
   end
 end
+after 'deploy:finished', 'maven:package'
 
 desc 'convert test file of one record'
 task :local_test do
