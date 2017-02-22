@@ -15,5 +15,4 @@ echo "Searching for empty MARC-XML files ${LD4P_MARCXML}/*.xml"
 find ${LD4P_MARCXML} -type f -empty -name '*.xml' -exec ls -l {} \;
 
 echo "Validating MARC-XML files ${LD4P_MARCXML}/*.xml"
-find ${LD4P_MARCXML} -type f -name '*.xml' -exec xmllint --noout --schema ./lib/MARC21slim.xsd {} \;
-
+find ${LD4P_MARCXML} -type f -name '*.xml' -exec xmllint --noout --schema ../lib/MARC21slim.xsd {} \;

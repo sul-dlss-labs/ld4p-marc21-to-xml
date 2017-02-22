@@ -1,5 +1,5 @@
 #!/bin/bash
-# Configure the LD4P-tracer-bullet scripts
+# Configure the scripts
 #
 # This configuration script is designed to be used like so:
 # source ./ld4p_configure.sh
@@ -8,7 +8,6 @@
 # system ENV or on the command line, like so:
 # LD4P_SIRSI=/ld4p_data source /path/to/ld4p_configure.sh
 
-export LD4P_BASEURI="http://linked-data-test.stanford.edu/library/"
 
 # If the system already defines an LD4P_SIRSI path, it will be used.
 # If a custom LD4P_SIRSI path is required, it can be set in the
@@ -34,11 +33,10 @@ mkdir -p ${LD4P_LOGS} || kill -INT $$
 mkdir -p ${LD4P_CONFIGS} || kill -INT $$
 
 # Paths for data records
-export LD4P_DATA="${LD4P_SIRSI}/Dataload/LD4P"
+LD4P_DATA="${LD4P_SIRSI}/Dataload/LD4P"
 export LD4P_MARC="${LD4P_DATA}/Marc"
 export LD4P_MARCXML="${LD4P_DATA}/MarcXML"
 # Create paths, recursively, if they don't exist
-mkdir -p ${LD4P_DATA} || kill -INT $$
 mkdir -p ${LD4P_MARC} || kill -INT $$
 mkdir -p ${LD4P_MARCXML} || kill -INT $$
 

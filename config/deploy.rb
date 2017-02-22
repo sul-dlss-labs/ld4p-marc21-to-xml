@@ -28,10 +28,30 @@ Capistrano::OneTimeKey.generate_one_time_key!
 #append :linked_files, 'config/settings.yml'
 
 # Default value for linked_dirs is []
-append :linked_dirs, 'data', 'log'
+append :linked_dirs, 'log'
 
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
 
 # Default value for keep_releases is 5
 # set :keep_releases, 5
+
+# update shared_configs before restarting app
+#before 'deploy:restart', 'shared_configs:update'
+
+namespace :maven do
+  desc 'package'
+  task :package do
+    on roles(:app), in: :sequence do
+      execute "cd #{current_path} && /usr/local/maven/bin/mvn clean package"
+    end
+  end
+end
+after 'deploy:finished', 'maven:package'
+
+desc 'convert test file of one record'
+task :local_test do
+  on roles(:app), in: :sequence do
+    execute "cd #{current_path} && ./bin/marc21_to_marcxml_local.sh one_record.mrc"
+  end
+end
