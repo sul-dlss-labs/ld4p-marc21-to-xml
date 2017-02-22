@@ -2,6 +2,8 @@
 #
 # Requires one input parameter - the path to a MARC21 binary file.
 #
+# note that log_dir and OUTPUT_DIR are expected to exist already.
+#
 # Process all records in the mrc_file using marc4j and SQL to
 # look up authority keys and retrieve any URI values from
 # 92X fields and put them in the subfield 0 so that the
@@ -13,15 +15,14 @@
 #   or combine input filename and input file directory into the same arg?
 INPUT_DATA_DIR='java/src/test/resources'
 
+# FIXME: this is hardcoded - it should be in a properties file or java command line -D arg)
 #OUTPUT_DIR = '~/data/marcxml_output'
-OUTPUT_DIR='~/data/local_test'
-mkdir -p ${OUTPUT_DIR} || kill -INT $$
+OUTPUT_DIR='../../../data/test'
 
 # vars above this line would to be changed to process other data
 #------------------------------------------------
 
 log_dir='log'
-mkdir -p ${log_dir} || kill -INT $$
 
 jar_dir='java/target'
 jar="${jar_dir}/xform-marc21-to-xml-jar-with-dependencies.jar"
@@ -54,4 +55,5 @@ else
     echo "ERROR: Conversion failed for ${mrc_file}" | tee --append ${err_file}
 fi
 
+echo
 exit ${success}

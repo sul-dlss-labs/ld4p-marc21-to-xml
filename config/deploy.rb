@@ -42,16 +42,19 @@ append :linked_dirs, 'log'
 namespace :maven do
   desc 'package'
   task :package do
-    on roles(:app), in: :sequence do
+    on roles(:app) do
       execute "cd #{current_path} && /usr/local/maven/bin/mvn clean package"
     end
   end
 end
 after 'deploy:finished', 'maven:package'
 
-desc 'convert test file of one record'
-task :local_test do
-  on roles(:app), in: :sequence do
-    execute "cd #{current_path} && ./bin/marc21_to_marcxml_local.sh one_record.mrc"
+namespace :deploy do
+  # needs to be in deploy namespace so deploy_host is defined properly (part of current_path)
+  desc 'convert test file of one record'
+  task :run_test do
+    on roles(:app) do
+      execute "cd #{current_path} && bin/marc21_to_marcxml_local.sh one_record.mrc"
+    end
   end
 end
