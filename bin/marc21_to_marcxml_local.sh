@@ -2,7 +2,7 @@
 #
 # Requires one input parameter - the path to a MARC21 binary file.
 #
-# Process all records in the MRC_FILE using marc4j and SQL to
+# Process all records in the mrc_file using marc4j and SQL to
 # look up authority keys and retrieve any URI values from
 # 92X fields and put them in the subfield 0 so that the
 # LOC converter (for Bibframe v1) can use them correctly.
@@ -20,38 +20,38 @@ mkdir -p ${OUTPUT_DIR} || kill -INT $$
 # vars above this line would to be changed to process other data
 #------------------------------------------------
 
-LOG_DIR='log'
-mkdir -p ${LOG_DIR} || kill -INT $$
+log_dir='log'
+mkdir -p ${log_dir} || kill -INT $$
 
-JAR_DIR='java/target'
-JAR="${JAR_DIR}/xform-marc21-to-xml-jar-with-dependencies.jar"
+jar_dir='java/target'
+jar="${jar_dir}/xform-marc21-to-xml-jar-with-dependencies.jar"
 
-MRC_FILE="${INPUT_DATA_DIR}/$1"
+mrc_file="${INPUT_DATA_DIR}/$1"
 
 # this var is used in java code
 # FIXME: have this be a java property? (in a properties file or java command line -D argument)
 export LD4P_MARCXML=${OUTPUT_DIR}
 
-filename=$(basename ${MRC_FILE} .mrc)
-LOG_DATE=$(date +%Y%m%dT%H%M%S)
-LOG_NAME="${LOG_DIR}/${filename}_marc21-to-xml_${LOG_DATE}"
-LOG_FILE="${LOG_NAME}.log"
-ERR_FILE="${LOG_NAME}_errors.log"
+filename=$(basename ${mrc_file} .mrc)
+log_date=$(date +%Y%m%dT%H%M%S)
+log_name="${log_dir}/${filename}_marc21-to-xml_${log_date}"
+log_file="${log_name}.log"
+err_file="${log_name}_errors.log"
 
 echo
-echo "Converting MARC file:  ${MRC_FILE}"
+echo "Converting MARC file:  ${mrc_file}"
 echo "Output MARC-XML files: ${LD4P_MARCXML}/*.xml"
-echo "Logging conversion to: ${LOG_FILE}"
+echo "Logging conversion to: ${log_file}"
 
-OPTIONS="-i ${MRC_FILE} -o ${LD4P_MARCXML} -l ${LOG_FILE} -r"
+options="-i ${mrc_file} -o ${LD4P_MARCXML} -l ${log_file} -r"
 
-java -cp ${JAR} edu.stanford.MarcToXML ${OPTIONS}
+java -cp ${jar} edu.stanford.MarcToXML ${options}
 
-SUCCESS=$?
-if [ ${SUCCESS} ]; then
+success=$?
+if [ ${success} ]; then
     echo "Completed conversion."
 else
-    echo "ERROR: Conversion failed for ${MRC_FILE}" | tee --append ${ERR_FILE}
+    echo "ERROR: Conversion failed for ${mrc_file}" | tee --append ${err_file}
 fi
 
-exit ${SUCCESS}
+exit ${success}
