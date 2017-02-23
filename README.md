@@ -63,7 +63,7 @@ Capistrano is used for deployment.
 
 3. Run a test marc21 file through the converter to ensure it works on remote VM:
 
-    `cap dev local_test`
+    `cap dev deploy:run_test`
 
 ## One Time Setup
 
