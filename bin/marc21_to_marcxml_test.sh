@@ -10,16 +10,16 @@
 # LOC converter (for Bibframe v1) can use them correctly.
 
 #INPUT_DATA_DIR = '/Symphony/Marc'
-#INPUT_DATA_DIR = '~/data/casalini-raw'
+#INPUT_DATA_DIR = '../../../data/casalini-raw'
 # FIXME: have this be a java property? (in a properties file or java command line -D argument)
 #   or combine input filename and input file directory into the same arg?
 INPUT_DATA_DIR='java/src/test/resources'
 
 # FIXME: this is hardcoded - it should be in a properties file or java command line -D arg)
-#OUTPUT_DIR = '~/data/marcxml_output'
+#OUTPUT_DIR = '../../../data/marcxml_output'
 OUTPUT_DIR='../../../data/test'
 
-# vars above this line would to be changed to process other data
+# vars above this line need to change to process other data
 #------------------------------------------------
 
 log_dir='log'
