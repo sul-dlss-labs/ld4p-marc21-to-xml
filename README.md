@@ -1,8 +1,9 @@
 [![Build Status](https://travis-ci.org/sul-dlss/ld4p-marc21-to-xml.svg?branch=master)](https://travis-ci.org/sul-dlss/ld4p-marc21-to-xml)
 [![Coverage Status](https://coveralls.io/repos/github/sul-dlss/ld4p-marc21-to-xml/badge.svg?branch=master)](https://coveralls.io/github/sul-dlss/ld4p-marc21-to-xml?branch=master)
+[![Dependency Status](https://gemnasium.com/badges/github.com/sul-dlss/ld4p-marc21-to-xml.svg)](https://gemnasium.com/github.com/sul-dlss/ld4p-marc21-to-xml)
 
 # ld4p-marc21-to-xml
-convert marc21 data into marcxml, with authority ids resolved to URIs via Symphony
+Convert marc21 data into marcxml, with authority ids resolved to URIs via Symphony
 
 ## Development
 
@@ -10,11 +11,11 @@ convert marc21 data into marcxml, with authority ids resolved to URIs via Sympho
 
 See One Time Setup below to set up dependencies
 
-To build and package the maven project (assuming maven is installed already):
+To compile and package the maven project:
 
-  `mvn package`
+  `mvn clean package`
 
-The resulting packaged JAR includes all dependencies.  The packaged JAR can be copied to a convenient location and used on the CLASSPATH or the command line, e.g.
+The resulting packaged JAR at `java/target/xform-marc21-to-xml-jar-with-dependencies.jar` includes all dependencies.  The packaged JAR can be copied to a convenient location and used on the CLASSPATH or the command line, e.g.
 ```
 $ cp java/target/xform-marc21-to-xml-jar-with-dependencies.jar ~/lib/ld4p_conversion.jar
 $ LD4P_JAR=~/lib/ld4p_conversion.jar
@@ -41,9 +42,8 @@ firefox target/site/cobertura/index.html
 The [Travis CI](https://travis-ci.org/sul-dlss/ld4p-marc21-to-xml) builds run tests and submit
 a coverage report to [Coveralls](https://coveralls.io/github/sul-dlss/ld4p-marc21-to-xml).
 To update Coveralls from the command line, try:
-```
-mvn clean test cobertura:cobertura coveralls:report -DrepoToken=yourcoverallsprojectrepositorytoken
-```
+
+  `mvn clean test cobertura:cobertura coveralls:report -DrepoToken=yourcoverallsprojectrepositorytoken`
 
 ## Deployment
 
@@ -55,13 +55,21 @@ Capistrano is used for deployment.
 
   to install the Ruby capistrano gems and other dependencies for deployment.
 
-2. Deploy code to remote VM:
+2. Set up shared directories on the remote VM:
+
+    ```
+    cd ld4p-marc21-to-xml
+    mkdir shared
+    mkdir shared/log
+    ```
+
+3. Deploy code to remote VM:
 
     `cap dev deploy`
 
   This will also build and package the code on the remote VM with Maven.
 
-3. Run a test marc21 file through the converter to ensure it works on remote VM:
+4. Run a test marc21 file through the converter to ensure it works on remote VM:
 
     `cap dev deploy:run_test`
 

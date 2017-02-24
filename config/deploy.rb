@@ -54,7 +54,7 @@ namespace :deploy do
   desc 'convert test file of one record'
   task :run_test do
     on roles(:app) do
-      execute "cd #{current_path} && bin/marc21_to_marcxml_local.sh one_record.mrc"
+      execute "cd #{current_path} && bin/marc21_to_marcxml_test.sh one_record.mrc"
     end
   end
 end
