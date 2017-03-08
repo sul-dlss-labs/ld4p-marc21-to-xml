@@ -27,9 +27,10 @@ buildNumber.properties
 .DS_Store
 
 java/src/main/resources/server.conf
-java/src/test/resources/server.conf
 java/log
-files/
+
+# MARC-XML output files
+data/MarcXML/*.xml
 
 # Log files
 log/*.log
@@ -42,4 +43,3 @@ laptop*
 # included in this public git repo.
 farmshare*
 
-data/*
