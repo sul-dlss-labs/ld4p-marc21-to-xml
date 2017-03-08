@@ -27,7 +27,6 @@ buildNumber.properties
 .DS_Store
 
 java/src/main/resources/server.conf
-java/src/test/resources/server.conf
 java/log
 files/
 
