@@ -25,7 +25,8 @@ Capistrano::OneTimeKey.generate_one_time_key!
 # set :pty, true
 
 # Default value for :linked_files is []
-#append :linked_files, 'config/settings.yml'
+append :linked_files, 'config/config.sh'
+append :linked_files, 'java/src/main/resources/server.conf'
 
 # Default value for linked_dirs is []
 append :linked_dirs, 'log'
