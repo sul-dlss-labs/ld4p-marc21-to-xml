@@ -51,6 +51,7 @@
                 <configuration>
                     <!--<descriptor>src/assembly/bin.xml</descriptor>-->
                     <descriptor>src/assembly/jar-with-dependencies.xml</descriptor>
+                    <outputDirectory>../lib</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
