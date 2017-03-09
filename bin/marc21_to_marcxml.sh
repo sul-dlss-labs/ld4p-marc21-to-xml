@@ -22,6 +22,10 @@ echo "Logging conversion to: ${log_file}"
 
 # Java library, built from ./java sources and copied to ./lib
 jar="${LD4P_LIB}/xform-marc21-to-xml-jar-with-dependencies.jar"
+if [ ! -f "$jar" ]; then
+    echo "ERROR: cannot find JAR: $jar"
+    exit 1
+fi
 
 # $ java -cp ${jar} edu.stanford.MarcToXML -h
 #  usage: edu.stanford.MarcToXML
