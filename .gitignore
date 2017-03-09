@@ -29,6 +29,9 @@ buildNumber.properties
 java/src/main/resources/server.conf
 java/log
 
+# Packaged JAR file
+lib/xform-marc21-to-xml-jar-with-dependencies.jar
+
 # MARC-XML output files
 data/MarcXML/*.xml
 
