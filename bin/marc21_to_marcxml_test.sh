@@ -45,6 +45,7 @@ if [ -s ${MARC_XML} ]; then
     echo "SUCCESS created MARC-XML file: ${MARC_XML}"
     # remove this output file, so this test is idempotent
     rm -f ${MARC_XML}
+    echo "CLEANUP removed test MARC-XML file: ${MARC_XML}"
 else
     echo "FAILURE to create MARC-XML file: ${MARC_XML}"
     exit 1
