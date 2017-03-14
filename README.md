@@ -137,3 +137,22 @@ credentials to maven settings.  Follow maven instructions to encrypt the passwor
 - For additional information about maven settings, see
     - https://maven.apache.org/settings.html
     - https://books.sonatype.com/nexus-book/reference/_adding_credentials_to_your_maven_settings.html
+
+## A note about the record source used for this conversion utility
+
+This MarcToXML converter can convert any records in marc21 binary format, however it is particularly designed to work using catalog records dumped from a SirsiDynix Symphony ILS server including the use of authority keys produced by the `catalogdump` utility. The specific command that is used to dump the catalog records is:
+```
+/s/sirsi/Unicorn/Bin/catalogdump -om -kc -h -z -j -n dumpjunktag.Bibframe 2>/dev/null
+```
+The explanation of the flags used is as follows:
+```
+-om (default) MARC records will be written to standard output.
+-kc outputs the catalog key without the a or u prefix.
+        Each of the key output options uses the 001 field by default.
+-h outputs items in holdings tags.
+-z causes the internal authority control subfields ? and = to be retained
+       in the output record.  If the -z flag is not used, the ? and = subfields
+j causes tags listed in the file Unicorn/Custom/dumpjunktag to be
+       excluded from exported records.  An alternate dumpjunktag file can be
+       specified using the -n argument.
+```
