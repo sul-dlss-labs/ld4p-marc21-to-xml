@@ -42,6 +42,14 @@ class MarcToXML {
     static CommandLine cmd = null;
     static Options options = new Options();
 
+    static void setOptions() {
+        options.addOption("h", "help", false, "help message");
+        options.addOption("i", "inputFile", true, "MARC input file (binary .mrc file expected; required)");
+        options.addOption("o", "outputPath", true, "MARC XML output path (default: ENV[\"LD4P_MARCXML\"])");
+        options.addOption("l", "logFile", true, "Log file output (default: " + logFileDefault + ")");
+        options.addOption("r", "replace", false, "Replace existing XML files (default: false)");
+    }
+
     private static void printHelp() {
         if (! cmd.hasOption('h'))
             return;
@@ -52,7 +60,7 @@ class MarcToXML {
 
     private static String marcInputFile = null;
 
-    public static void setMarcInputFile(String file) {
+    static void setMarcInputFile(String file) {
         if (file != null) {
             MarcToXML.marcInputFile = file;
         } else {
@@ -61,11 +69,15 @@ class MarcToXML {
         }
     }
 
-    static Boolean xmlReplace = false;
+    private static Boolean xmlReplace = false;
+
+    static void setXmlReplace(Boolean replace) {
+        MarcToXML.xmlReplace = replace;
+    }
 
     static String xmlOutputPath = null;
 
-    public static void setXmlOutputPath(String path) {
+    static void setXmlOutputPath(String path) {
         if (path != null)
             MarcToXML.xmlOutputPath = path;
         else
@@ -76,7 +88,7 @@ class MarcToXML {
 
     private static String logFileDefault = "log/MarcToXML.log";
 
-    public static void setLogger(String logFile) {
+    static void setLogger(String logFile) {
         // See src/main/resources/log4j2.xml for configuration details.
         // This method uses a programmatic approach to add a file logger.
         if (logFile == null)
@@ -141,7 +153,7 @@ class MarcToXML {
         // TODO: check what happens when long options are used instead of short options?
         // TODO: might need to check for the presence of each of them to get the value?
         setLogger( cmd.getOptionValue("l") );
-        xmlReplace = cmd.hasOption("r");
+        setXmlReplace( cmd.hasOption("r") );
 
         FileInputStream marcInputFileStream = new FileInputStream(marcInputFile);
         MarcReader marcReader = new MarcStreamReader(marcInputFileStream);
@@ -150,23 +162,13 @@ class MarcToXML {
         }
     }
 
-    public static void setOptions() {
-        options.addOption("h", "help", false, "help message");
-        options.addOption("i", "inputFile", true, "MARC input file (binary .mrc file expected; required)");
-        options.addOption("o", "outputPath", true, "MARC XML output path (default: ENV[\"LD4P_MARCXML\"])");
-        options.addOption("l", "logFile", true, "Log file output (default: " + logFileDefault + ")");
-        options.addOption("r", "replace", false, "Replace existing XML files (default: false)");
-    }
-
-    public static void convertMarcRecord (Record record) {
+    static void convertMarcRecord(Record record) {
         try {
             String xmlFilePath = xmlOutputFilePath(record);
             File xmlFile = new File(xmlFilePath);
             if (doConversion(xmlFile, xmlReplace)) {
-                AuthDBLookup authLookup = new AuthDBLookup(record);
-                authLookup.marcResolveAuthorities();
                 MarcWriter writer = marcRecordWriter(xmlFilePath);
-                writer.write(authLookup.getRecord());
+                writer.write(authorityLookup(record));
                 writer.close();
                 log.info("Output MARC-XML file: " + xmlFilePath);
             } else {
@@ -178,15 +180,21 @@ class MarcToXML {
         }
     }
 
+    static Record authorityLookup(Record record) throws IOException, SQLException {
+        AuthDBLookup authLookup = new AuthDBLookup(record);
+        authLookup.marcResolveAuthorities();
+        return authLookup.getRecord();
+    }
+
     // TODO: move this method to a subclass of Record
-    public static String xmlOutputFilePath(Record record) {
+    static String xmlOutputFilePath(Record record) {
         String cn = record.getControlNumber();
         String outFileName = cn.replaceAll(" ", "_").toLowerCase() + ".xml";
         Path outFilePath = Paths.get(xmlOutputPath, outFileName);
         return outFilePath.toString();
     }
 
-    public static Boolean doConversion (File xmlFile, Boolean xmlReplace) {
+    static Boolean doConversion(File xmlFile, Boolean xmlReplace) {
         if (!xmlFile.exists() || xmlReplace) {
              return true;
          }
