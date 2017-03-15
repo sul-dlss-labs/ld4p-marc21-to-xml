@@ -22,7 +22,7 @@ import java.util.List;
  */
 class AuthDBLookup {
 
-    static Connection authDB = null;
+    Connection authDB = null;
 
     Record record;
 
@@ -65,7 +65,7 @@ class AuthDBLookup {
         }
     }
 
-    private static void addAuthURIandRemoveSubfields(String data, DataField dataField,
+    private void addAuthURIandRemoveSubfields(String data, DataField dataField,
                                                      Subfield sf, MarcFactory factory) {
 
         String key = data.substring(2);
@@ -81,18 +81,18 @@ class AuthDBLookup {
         dataField.removeSubfield(sf);
     }
 
-    private static String lookupAuthID(String key) {
+    private String lookupAuthID(String key) {
         String sql = "select authority_id from authority where authority_key = '" + key + "'";
         return queryAuth(sql);
     }
 
-    private static String lookupAuthURI(String authID, String tagNum) {
+    private String lookupAuthURI(String authID, String tagNum) {
         String sql = "SELECT AUTHORVED.tag FROM AUTHORVED LEFT JOIN AUTHORITY ON AUTHORVED.offset = AUTHORITY.ved_offset" +
                 " where AUTHORITY.authority_id='" + authID + "' and AUTHORVED.tag_number='" + tagNum + "'";
         return queryAuth(sql);
     }
 
-    private static String queryAuth(String sql) {
+    private String queryAuth(String sql) {
         String result = "";
         try {
             Statement s = authDB.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -109,7 +109,7 @@ class AuthDBLookup {
         return result;
     }
 
-    private static void setAuthConnection() throws IOException, SQLException {
+    private void setAuthConnection() throws IOException, SQLException {
         if ( authDB == null )
             authDB = AuthDBConnection.open();
     }

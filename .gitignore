@@ -26,8 +26,9 @@ buildNumber.properties
 # Mac
 .DS_Store
 
-java/src/main/resources/server.conf
-java/log
+# Java project files
+xform-marc21-to-xml/src/main/resources/server.conf
+xform-marc21-to-xml/log
 
 # Packaged JAR file
 lib/xform-marc21-to-xml-jar-with-dependencies.jar
