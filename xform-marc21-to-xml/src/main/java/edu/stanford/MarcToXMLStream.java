@@ -18,16 +18,34 @@ import java.sql.SQLException;
  */
 class MarcToXMLStream {
 
-    static MarcReader marcReader = new MarcStreamReader(System.in);
-    static MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
+    private static MarcReader marcReader = new MarcStreamReader(System.in);
+    private static MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
+
+    public static void setMarcReader(MarcReader marcReader) {
+        MarcToXMLStream.marcReader = marcReader;
+    }
+
+    public static void setMarcWriter(MarcWriter marcWriter) {
+        MarcToXMLStream.marcWriter = marcWriter;
+    }
 
     public static void main (String [] args) throws IOException, SQLException {
+        convertRecords();
+    }
+
+    static void convertRecords() throws IOException, SQLException {
         while (marcReader.hasNext()) {
             Record record = marcReader.next();
-            AuthDBLookup authLookup = new AuthDBLookup(record);
-            authLookup.marcResolveAuthorities();
-            marcWriter.write(authLookup.getRecord());
+            marcWriter.write(authorityLookup(record));
         }
         marcWriter.close();
     }
+
+    static Record authorityLookup(Record record) throws IOException, SQLException {
+        AuthDBLookup authLookup = new AuthDBLookup(record);
+        authLookup.marcResolveAuthorities();
+        authLookup.closeConnection();
+        return authLookup.getRecord();
+    }
+
 }
