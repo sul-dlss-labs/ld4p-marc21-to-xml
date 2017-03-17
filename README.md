@@ -147,12 +147,9 @@ This MarcToXML converter can convert any records in marc21 binary format, howeve
 The explanation of the flags used is as follows:
 ```
 -om (default) MARC records will be written to standard output.
--kc outputs the catalog key without the a or u prefix.
-        Each of the key output options uses the 001 field by default.
+-kc outputs the catalog key without the a or u prefix. Each of the key output options uses the 001 field by default.
 -h outputs items in holdings tags.
--z causes the internal authority control subfields ? and = to be retained
-       in the output record.  If the -z flag is not used, the ? and = subfields
-j causes tags listed in the file Unicorn/Custom/dumpjunktag to be
-       excluded from exported records.  An alternate dumpjunktag file can be
-       specified using the -n argument.
+-z causes the internal authority control subfields ? and = to be retained in the output record.
+-j causes tags listed in the file Unicorn/Custom/dumpjunktag to be excluded from exported records.
+   An alternate dumpjunktag file can be specified using the -n argument.
 ```
