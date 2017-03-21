@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><collection xmlns="http://www.loc.gov/MARC21/slim">
+  <record>
+    <leader>01025cam a2200289 a 4500</leader>
+    <controlfield tag="001">1629059</controlfield>
+    <controlfield tag="003">SIRSI</controlfield>
+    <controlfield tag="005">19910712000000.0</controlfield>
+    <controlfield tag="008">860723m19859999ru ac    b    000 0cruso </controlfield>
+
+    <invalidfield>
+    </invalidfield>
+
+    <datafield tag="010" ind1=" " ind2=" ">
+      <subfield code="a">   86169543</subfield>
+    </datafield>
+    <datafield tag="100" ind1="1" ind2=" ">
+      <subfield code="a">Savelʹev, N. I͡A.</subfield>
+      <subfield code="q">(Nikolaĭ I͡Akovlevich),</subfield>
+      <subfield code="d">1908-1967.</subfield>
+    </datafield>
+    <datafield tag="505" ind1="1" ind2=" ">
+      <subfield code="a">Ch. 1. Mastera khrustalʹnogo dela. Filipp Vasilʹevich Struzhkov. Kozʹma Dmitrievich Frolov. V starom Salaire -- ch. 2. Mekhanikus Ivan Polzunov -</subfield>
+    </datafield>
+    <datafield tag="596" ind1=" " ind2=" ">
+      <subfield code="a">1</subfield>
+    </datafield>
+  </record>
+</collection>
