@@ -37,8 +37,6 @@ import java.util.List;
  */
 class MarcToXML {
 
-    static Connection authDB = null;
-
     // Apache Commons-CLI Options
     // https://commons.apache.org/proper/commons-cli/introduction.html
     static CommandLine cmd = null;
@@ -134,7 +132,6 @@ class MarcToXML {
     }
 
     public static void main (String [] args) throws IOException, ParseException {
-
         setOptions();
         CommandLineParser parser = new DefaultParser();
         cmd = parser.parse(options, args);
@@ -154,7 +151,6 @@ class MarcToXML {
     }
 
     public static void setOptions() {
-
         options.addOption("h", "help", false, "help message");
         options.addOption("i", "inputFile", true, "MARC input file (binary .mrc file expected; required)");
         options.addOption("o", "outputPath", true, "MARC XML output path (default: ENV[\"LD4P_MARCXML\"])");
@@ -167,10 +163,10 @@ class MarcToXML {
             String xmlFilePath = xmlOutputFilePath(record);
             File xmlFile = new File(xmlFilePath);
             if (doConversion(xmlFile, xmlReplace)) {
+                AuthDBLookup authLookup = new AuthDBLookup(record);
+                authLookup.marcResolveAuthorities();
                 MarcWriter writer = marcRecordWriter(xmlFilePath);
-
-                marcResolveAuthorities(record);
-                writer.write(record);
+                writer.write(authLookup.getRecord());
                 writer.close();
                 log.info("Output MARC-XML file: " + xmlFilePath);
             } else {
@@ -179,37 +175,6 @@ class MarcToXML {
         }
         catch (IOException | SQLException | NullPointerException | MarcException e) {
             reportErrors(e);
-        }
-    }
-
-    // TODO: move this method to a subclass of Record
-    public static void marcResolveAuthorities(Record record) throws IOException, SQLException {
-        List subFieldList;
-        DataField dataField;
-        MarcFactory factory = MarcFactory.newInstance();
-
-        List fields = record.getDataFields();
-        Iterator dataFieldIterator = fields.iterator();
-
-        while (dataFieldIterator.hasNext()) {
-            dataField = (DataField) dataFieldIterator.next();
-
-            subFieldList = dataField.getSubfields();
-            Object [] subFields = subFieldList.toArray(new Object[subFieldList.size()]);
-
-            for (int s = 0; s < subFields.length; s++) {
-                Subfield sf = (Subfield) subFields[s];
-                char code = sf.getCode();
-                String codeStr = String.valueOf(code);
-                String data = sf.getData();
-
-                if (codeStr.equals("=")) {
-                    addAuthURIandRemoveSubfields(data, dataField, sf, factory);
-                }
-                if (codeStr.equals("?")) {
-                    dataField.removeSubfield(sf);
-                }
-            }
         }
     }
 
@@ -228,28 +193,6 @@ class MarcToXML {
          else {
              return false;
          }
-    }
-
-    public static void addAuthURIandRemoveSubfields(String data, DataField dataField,
-                                                    Subfield sf, MarcFactory factory) throws IOException, SQLException {
-        setAuthConnection();
-
-        String key = data.substring(2);
-        String authID = AuthIDfromDB.lookup(key, authDB);
-
-        //TODO consider just getting all the URI's from the authority record here
-        String[] tagNs = {"920", "921", "922"};
-        for (String n : tagNs) {
-            String uri = AuthURIfromDB.lookup(authID, n, authDB);
-            if (uri.length() > 0)
-                dataField.addSubfield(factory.newSubfield('0', uri));
-        }
-        dataField.removeSubfield(sf);
-    }
-
-    static void setAuthConnection() throws IOException, SQLException {
-        if ( authDB == null )
-            authDB = AuthDBConnection.open();
     }
 
     private static MarcWriter marcRecordWriter(String filePath) throws FileNotFoundException {
