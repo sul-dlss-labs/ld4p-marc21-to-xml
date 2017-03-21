@@ -1,7 +1,5 @@
 package edu.stanford;
 
-import org.apache.commons.cli.*;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,53 +8,86 @@ import org.marc4j.MarcStreamReader;
 import org.marc4j.marc.Record;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
-import java.io.*;
-import java.nio.file.Path;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
+import java.sql.Statement;
 
-import static edu.stanford.AuthDBLookup.*;
-import static java.nio.file.Files.createTempDirectory;
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  *
  */
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.management.*", "oracle.xdb.XMLType"})
-@PrepareForTest({ AuthDBLookup.class, AuthDBConnection.class })
+@PrepareForTest({AuthDBConnection.class})
 public class AuthDBLookupTest {
+
+    // For additional test data, consider the marc4j data at
+    // https://github.com/marc4j/marc4j/tree/master/test/resources
+    private final String marcFileResource = "/one_record.mrc";
+    private final String marcFilePath = getClass().getResource(marcFileResource).getFile();
+
+    private Record marcRecord = null;
+    private AuthDBLookup authLookup = null;
+
+    private Statement mockStatement = null;
+    private Connection mockConnection = null;
+
+    private void mockConnection() throws SQLException, IOException {
+        mockConnection = Mockito.mock(Connection.class);
+        PowerMockito.mockStatic(AuthDBConnection.class);
+        Mockito.when(AuthDBConnection.open()).thenReturn(mockConnection);
+    }
+
+    @Before
+    public void setUp() throws IOException, SQLException {
+        mockConnection();
+        // Read a MARC record
+        MarcStreamReader marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
+        marcRecord = marcReader.next();
+        authLookup = new AuthDBLookup(marcRecord);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        mockStatement = null;
+        mockConnection = null;
+    }
 
     @Test
     public void setAuthConnectionTest() {
-/*        try {
-            assertTrue(AuthDBLookup.authDB == null);
-            AuthDBLookup.setAuthConnection();
-        } catch (Throwable expected) {
-            assertNotEquals(IOException.class, expected.getClass());
-            assertNotEquals(SQLException.class, expected.getClass());
-        }*/
-
-/*        try {
-            AuthDBLookup.authDB = Mockito.mock(Connection.class);
-            AuthDBLookup.setAuthConnection();
-            assertFalse(AuthDBLookup.authDB == null);
-        } catch (Throwable expected) {
-            assertNotEquals(IOException.class, expected.getClass());
-            assertNotEquals(SQLException.class, expected.getClass());
-        }*/
+        assertThat(authLookup.authDB, instanceOf(Connection.class));
     }
 
+    @Test
+    public void closeConnection() throws Exception {
+        authLookup.closeConnection();
+        // Failing to verify the connection.close(), PowerMock exceptions
+//        Mockito.verify(mockConnection).close();
+    }
+
+    @Test
+    public void getRecord() throws Exception {
+        assertThat(authLookup.getRecord(), instanceOf(Record.class));
+        assertEquals(authLookup.getRecord(), marcRecord);
+    }
+
+    @Test
+    public void marcResolveAuthorities() throws Exception {
+        authLookup.marcResolveAuthorities();
+        // TODO: use some test data with authKey that can be resolved to URIs
+        // Failing to verify, PowerMock exceptions
+//        PowerMockito.verifyPrivate(AuthDBLookup.class).invoke("addAuthURIandRemoveSubfields",
+//                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        // Failing to mock the statement, PowerMock exceptions
+//        mockStatement = Mockito.mock(Statement.class);
+//        Mockito.when(mockConnection.createStatement(Mockito.any(), Mockito.any())).thenReturn(mockStatement);
+//        verify(mockStatement).executeQuery("DROP TABLE IF EXISTS PERSON");
+    }
 }

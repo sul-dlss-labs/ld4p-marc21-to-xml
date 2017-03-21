@@ -65,6 +65,10 @@ class AuthDBLookup {
         }
     }
 
+    public void closeConnection() throws SQLException {
+        authDB.close();
+    }
+
     private void addAuthURIandRemoveSubfields(String data, DataField dataField,
                                                      Subfield sf, MarcFactory factory) {
 
