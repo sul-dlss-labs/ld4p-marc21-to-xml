@@ -2,6 +2,7 @@ package edu.stanford;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.marc4j.MarcStreamReader;
@@ -18,8 +19,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 /**
  *
@@ -51,7 +51,7 @@ public class AuthDBLookupTest {
         // Read a MARC record
         MarcStreamReader marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
         marcRecord = marcReader.next();
-        authLookup = new AuthDBLookup(marcRecord);
+        authLookup = new AuthDBLookup();
     }
 
     @After
@@ -61,33 +61,43 @@ public class AuthDBLookupTest {
     }
 
     @Test
-    public void setAuthConnectionTest() {
+    public void openConnection() throws IOException, SQLException {
+        authLookup.openConnection();
         assertThat(authLookup.authDB, instanceOf(Connection.class));
     }
 
     @Test
+    public void openConnectionIdempotent() throws IOException, SQLException {
+        authLookup.openConnection();
+        assertThat(authLookup.authDB, instanceOf(Connection.class));
+        Connection conn1 = authLookup.authDB;
+        authLookup.openConnection();
+        assertThat(authLookup.authDB, instanceOf(Connection.class));
+        Connection conn2 = authLookup.authDB;
+        assertEquals(conn1, conn2);
+    }
+
+    @Test
     public void closeConnection() throws Exception {
+        authLookup.openConnection();
         authLookup.closeConnection();
-        // Failing to verify the connection.close(), PowerMock exceptions
-//        Mockito.verify(mockConnection).close();
+        assertNull(authLookup.authDB);
     }
 
     @Test
-    public void getRecord() throws Exception {
-        assertThat(authLookup.getRecord(), instanceOf(Record.class));
-        assertEquals(authLookup.getRecord(), marcRecord);
+    public void marcWithoutResolveAuthorities() throws Exception {
+        authLookup.openConnection();
+        Record record = authLookup.marcResolveAuthorities(marcRecord);
+        assertEquals(record, marcRecord);
     }
 
+    // TODO: use some test data with authKey that can be resolved to URIs
+    // TODO: when the URIs can be resolved, the return record != marcRecord
+    @Ignore("Requires stubs to resolve URIs")
     @Test
-    public void marcResolveAuthorities() throws Exception {
-        authLookup.marcResolveAuthorities();
-        // TODO: use some test data with authKey that can be resolved to URIs
-        // Failing to verify, PowerMock exceptions
-//        PowerMockito.verifyPrivate(AuthDBLookup.class).invoke("addAuthURIandRemoveSubfields",
-//                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-        // Failing to mock the statement, PowerMock exceptions
-//        mockStatement = Mockito.mock(Statement.class);
-//        Mockito.when(mockConnection.createStatement(Mockito.any(), Mockito.any())).thenReturn(mockStatement);
-//        verify(mockStatement).executeQuery("DROP TABLE IF EXISTS PERSON");
+    public void marcWithResolveAuthorities() throws Exception {
+        authLookup.openConnection();
+        Record record = authLookup.marcResolveAuthorities(marcRecord);
+        assertNotEquals(record, marcRecord);
     }
 }

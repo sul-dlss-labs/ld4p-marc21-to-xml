@@ -24,18 +24,17 @@ class AuthDBLookup {
 
     Connection authDB = null;
 
-    Record record;
-
-    public Record getRecord() {
-        return record;
+    public void openConnection() throws IOException, SQLException {
+        if ( authDB == null )
+            authDB = AuthDBConnection.open();
     }
 
-    public AuthDBLookup(Record record) throws IOException, SQLException {
-        this.record = record;
-        setAuthConnection();
+    public void closeConnection() throws SQLException {
+        authDB.close();
+        authDB = null;
     }
 
-    public void marcResolveAuthorities() {
+    public Record marcResolveAuthorities(Record record) {
         List subFieldList;
         DataField dataField;
         MarcFactory factory = MarcFactory.newInstance();
@@ -63,10 +62,7 @@ class AuthDBLookup {
                 }
             }
         }
-    }
-
-    public void closeConnection() throws SQLException {
-        authDB.close();
+        return record;
     }
 
     private void addAuthURIandRemoveSubfields(String data, DataField dataField,
@@ -113,8 +109,4 @@ class AuthDBLookup {
         return result;
     }
 
-    private void setAuthConnection() throws IOException, SQLException {
-        if ( authDB == null )
-            authDB = AuthDBConnection.open();
-    }
 }

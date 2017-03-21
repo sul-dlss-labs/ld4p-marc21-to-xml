@@ -16,7 +16,7 @@ import java.sql.SQLException;
  * for each 92X field in order to leverage the functionality of the LOC marc2bibframe converter's ability to create
  * bf:hasAuthority elements for URI's present in that subfield (BF1.0).
  */
-class MarcToXMLStream {
+class MarcToXMLStream extends MarcConverterWithAuthorityLookup {
 
     private static MarcReader marcReader = new MarcStreamReader(System.in);
     private static MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
@@ -31,21 +31,15 @@ class MarcToXMLStream {
 
     public static void main (String [] args) throws IOException, SQLException {
         convertRecords();
+        authLookupClose();
     }
 
     static void convertRecords() throws IOException, SQLException {
         while (marcReader.hasNext()) {
             Record record = marcReader.next();
-            marcWriter.write(authorityLookup(record));
+            marcWriter.write(authLookups(record));
         }
         marcWriter.close();
-    }
-
-    static Record authorityLookup(Record record) throws IOException, SQLException {
-        AuthDBLookup authLookup = new AuthDBLookup(record);
-        authLookup.marcResolveAuthorities();
-        authLookup.closeConnection();
-        return authLookup.getRecord();
     }
 
 }

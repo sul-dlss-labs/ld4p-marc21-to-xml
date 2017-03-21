@@ -9,6 +9,7 @@ import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcWriter;
 import org.marc4j.MarcXmlWriter;
 import org.marc4j.marc.Record;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -16,21 +17,18 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.sql.SQLException;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
 
 /**
  *
  */
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"javax.management.*"})
-@PrepareForTest({ MarcToXMLStream.class })
+@PrepareForTest({ MarcToXMLStream.class, MarcConverterWithAuthorityLookup.class })
 public class MarcToXMLStreamTest {
 
     private static Path outputPath;
@@ -41,16 +39,11 @@ public class MarcToXMLStreamTest {
     private final String marcFileResource = "/one_record.mrc";
     private final String marcFilePath = getClass().getResource(marcFileResource).getFile();
 
-    private MarcStreamReader marcReader = null;
-    private Record marcRecord = null;
-
     @Before
     public void setUp() throws IOException {
-        // Read a MARC binary file resource
-        marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
+        // Set the MARC file reader
+        MarcStreamReader marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
         MarcToXMLStream.setMarcReader(marcReader); // usually STDIN
-        assertTrue(marcReader.hasNext());
-        marcRecord = marcReader.next();
         // Output MARC-XML where these tests can access it easily.
         outputPath = createTempDirectory("MarcToXMLStreamTest_");
         outputFile = createTempFile(outputPath, "marc_record", "xml");
@@ -66,29 +59,34 @@ public class MarcToXMLStreamTest {
 
     @Test
     public void mainTest() throws Exception {
+        PowerMockito.spy(MarcToXMLStream.class);
+        PowerMockito.doNothing().when(MarcToXMLStream.class, "convertRecords");
+        String [] args = new String[] {};
+        MarcToXMLStream.main(args);
+    }
+
+    @Test
+    public void convertRecordsTest() throws Exception {
         File marcXmlFile = outputFile.toFile();
-        assertTrue(marcXmlFile.exists());  // setUp() creates the temporary file
+        assertTrue(marcXmlFile.exists());  // setUp() creates a temporary file
         long modifiedA = marcXmlFile.lastModified();
         // Does the file get updated?
         TimeUnit.SECONDS.sleep(1); // delay so file.lastModified() is different
-        convertRecordsUsingStubAuthDB();
+        stubAuthLookups();
+        MarcToXMLStream.convertRecords();
         long modifiedB = marcXmlFile.lastModified();
         assertTrue(modifiedA < modifiedB);
         assertTrue(MarcXMLValidator.valid(outputFile.toString()));
     }
 
-    private void convertRecordsUsingStubAuthDB() throws IOException, SQLException {
-        PowerMockito.mockStatic(MarcToXMLStream.class, CALLS_REAL_METHODS);
-        PowerMockito.stub(PowerMockito.method(MarcToXMLStream.class, "authorityLookup")).toReturn(marcRecord);
-        MarcToXMLStream.convertRecords();
-    }
-
-    private void debugInspections() {
-        marcRecord = marcReader.next();
-        List cFields = marcRecord.getControlFields();
-        List dFields = marcRecord.getDataFields();
-        System.err.println(cFields.toString());
-        System.err.println(dFields.toString());
+    private void stubAuthLookups() throws Exception {
+        MarcStreamReader reader = new MarcStreamReader(new FileInputStream(marcFilePath));
+        Record marcRecord = reader.next();
+        reader = null;
+        PowerMockito.mockStatic(MarcConverterWithAuthorityLookup.class);
+        PowerMockito.when(MarcConverterWithAuthorityLookup.authLookups(Mockito.any())).thenReturn(marcRecord);
+        PowerMockito.doNothing().when(MarcConverterWithAuthorityLookup.class, "authLookupInit");
+        PowerMockito.doNothing().when(MarcConverterWithAuthorityLookup.class, "authLookupClose");
     }
 
 }
