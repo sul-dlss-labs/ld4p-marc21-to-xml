@@ -10,7 +10,7 @@
     <packaging>pom</packaging>
     <name>LD4P: convert marc21 data into marcxml (authority ids resolved to URIs via Symphony)</name>
     <modules>
-        <module>java</module>
+        <module>xform-marc21-to-xml</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

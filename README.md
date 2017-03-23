@@ -13,12 +13,20 @@ See One Time Setup below to set up dependencies
 
 To compile and package the maven project:
 
-  `mvn clean package`
-
-The resulting packaged JAR at `java/target/xform-marc21-to-xml-jar-with-dependencies.jar` includes all dependencies.  The packaged JAR can be copied to a convenient location and used on the CLASSPATH or the command line, e.g.
 ```
-$ cp java/target/xform-marc21-to-xml-jar-with-dependencies.jar ~/lib/ld4p_conversion.jar
-$ LD4P_JAR=~/lib/ld4p_conversion.jar
+git clone https://github.com/sul-dlss/ld4p-marc21-to-xml.git
+cd ld4p-marc21-to-xml
+# Conversions require connection details to a Symphony authority database;
+# for this, add a file to xform-marc21-to-xml/src/main/resources/server.conf
+# For example, see xform-marc21-to-xml/src/test/resources/server.conf
+mvn clean package
+```
+
+On success, this creates `lib/xform-marc21-to-xml-jar-with-dependencies.jar`, which
+includes all dependencies.  The packaged JAR can be copied to a convenient location
+and used on the CLASSPATH or the command line, e.g.
+```
+$ LD4P_JAR=$(pwd)/lib/xform-marc21-to-xml-jar-with-dependencies.jar
 $ java -cp ${LD4P_JAR} edu.stanford.MarcToXML -h
 usage: edu.stanford.MarcToXML
  -h,--help               help message
@@ -28,6 +36,24 @@ usage: edu.stanford.MarcToXML
  -o,--outputPath <arg>   MARC XML output path (default:
                          ENV["LD4P_MARCXML"])
  -r,--replace            Replace existing XML files (default: false)
+```
+
+The `edu.stanford.MarcToXML` utility has command line options (as above) to specify
+an input MARC21 binary file and an output path for XML files (one for each record).
+The `edu.stanford.MarcToXMLStream` utility accepts MARC21 binary data on the STDIN
+and outputs MARC-XML to the STDOUT.  During the conversions, these utilities access
+a Symphony database to lookup authority data, by authority-key, to extract additional
+authority URI data.  e.g.
+
+```
+$ MARC21_FILE=xform-marc21-to-xml/src/test/resources/one_record.mrc
+$ cat $MARC_FILE | java -cp ${LD4P_JAR} edu.stanford.MarcToXMLStream | xmllint --format -
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<marcxml:collection xmlns:marcxml="http://www.loc.gov/MARC21/slim">
+  <marcxml:record>
+  etc.
+  </marcxml:record>
+</marcxml:collection>
 ```
 
 ### Code Coverage Reports
