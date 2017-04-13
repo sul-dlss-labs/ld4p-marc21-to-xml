@@ -33,6 +33,10 @@ class AuthDBProperties {
         initDataSourceProperties(properties);
     }
 
+    public AuthDBProperties(Properties properties) {
+        initDataSourceProperties(properties);
+    }
+
     public String getURL() {
         return "jdbc:oracle:thin:@" + this.server + ":1521:" + this.service;
     }

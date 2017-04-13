@@ -67,7 +67,17 @@ public class AuthDBPropertiesTest {
     }
 
     @Test
-    public void testConstructorWithString() throws IOException {
+    public void testConstructorWithProperties() throws IOException {
+        setServerConf();
+        AuthDBProperties customProps = new AuthDBProperties(serverConf);
+        assertEquals(serverConf.getProperty("USER"), customProps.getUserName());
+        assertEquals(serverConf.getProperty("PASS"), customProps.getUserPass());
+        assertEquals(serverConf.getProperty("SERVER"), customProps.getServer());
+        assertEquals(serverConf.getProperty("SERVICE_NAME"), customProps.getService());
+    }
+
+    @Test
+    public void testConstructorWithFileString() throws IOException {
         setServerConf();
         setServerConfFile();
         FileUtils.copyFileToDirectory(serverConfFile, tmpDir);
