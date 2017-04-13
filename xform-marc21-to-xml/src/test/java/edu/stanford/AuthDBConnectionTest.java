@@ -24,7 +24,8 @@ public class AuthDBConnectionTest {
         Field field = AuthDBConnection.class.getDeclaredField("ds");
         field.setAccessible(true);
         assertNull(field.get(null));
-        AuthDBConnection.setDataSource();
+        AuthDBProperties authDBProperties = new AuthDBProperties();
+        AuthDBConnection.setDataSource(authDBProperties);
         assertNotNull(field.get(null));
         assertThat(field.get(null), instanceOf(OracleDataSource.class));
     }

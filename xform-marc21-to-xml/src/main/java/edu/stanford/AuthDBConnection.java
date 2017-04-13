@@ -14,13 +14,12 @@ class AuthDBConnection {
 
     private static OracleDataSource ds = null;
 
-    public static Connection open() throws SQLException, IOException {
-        setDataSource();
+    public static Connection open(AuthDBProperties props) throws SQLException, IOException {
+        setDataSource(props);
         return ds.getConnection();
     }
 
-    static void setDataSource() throws SQLException, IOException {
-        AuthDBProperties props = new AuthDBProperties();
+    static void setDataSource(AuthDBProperties props) throws SQLException, IOException {
         ds = new OracleDataSource();
         ds.setURL(props.getURL());
         ds.setUser(props.getUserName());
