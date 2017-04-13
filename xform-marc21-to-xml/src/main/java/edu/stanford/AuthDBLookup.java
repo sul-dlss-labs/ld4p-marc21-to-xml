@@ -24,9 +24,9 @@ class AuthDBLookup {
 
     Connection authDB = null;
 
-    public void openConnection() throws IOException, SQLException {
+    public void openConnection(AuthDBProperties authDBProperties) throws IOException, SQLException {
         if ( authDB == null )
-            authDB = AuthDBConnection.open();
+            authDB = AuthDBConnection.open(authDBProperties);
     }
 
     public void closeConnection() throws SQLException {

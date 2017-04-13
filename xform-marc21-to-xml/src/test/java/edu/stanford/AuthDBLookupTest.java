@@ -9,6 +9,7 @@ import org.marc4j.MarcStreamReader;
 import org.marc4j.marc.Record;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -20,12 +21,14 @@ import java.sql.Statement;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
 
 /**
  *
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AuthDBConnection.class})
+@PowerMockIgnore({"javax.management.*"})
 public class AuthDBLookupTest {
 
     // For additional test data, consider the marc4j data at
@@ -39,10 +42,14 @@ public class AuthDBLookupTest {
     private Statement mockStatement = null;
     private Connection mockConnection = null;
 
+    private AuthDBProperties authDBProperties() throws IOException {
+        return new AuthDBProperties();
+    }
+
     private void mockConnection() throws SQLException, IOException {
         mockConnection = Mockito.mock(Connection.class);
         PowerMockito.mockStatic(AuthDBConnection.class);
-        Mockito.when(AuthDBConnection.open()).thenReturn(mockConnection);
+        Mockito.when(AuthDBConnection.open(any(AuthDBProperties.class))).thenReturn(mockConnection);
     }
 
     @Before
@@ -62,16 +69,16 @@ public class AuthDBLookupTest {
 
     @Test
     public void openConnection() throws IOException, SQLException {
-        authLookup.openConnection();
+        authLookup.openConnection(authDBProperties());
         assertThat(authLookup.authDB, instanceOf(Connection.class));
     }
 
     @Test
     public void openConnectionIdempotent() throws IOException, SQLException {
-        authLookup.openConnection();
+        authLookup.openConnection(authDBProperties());
         assertThat(authLookup.authDB, instanceOf(Connection.class));
         Connection conn1 = authLookup.authDB;
-        authLookup.openConnection();
+        authLookup.openConnection(authDBProperties());
         assertThat(authLookup.authDB, instanceOf(Connection.class));
         Connection conn2 = authLookup.authDB;
         assertEquals(conn1, conn2);
@@ -79,14 +86,14 @@ public class AuthDBLookupTest {
 
     @Test
     public void closeConnection() throws Exception {
-        authLookup.openConnection();
+        authLookup.openConnection(authDBProperties());
         authLookup.closeConnection();
         assertNull(authLookup.authDB);
     }
 
     @Test
     public void marcWithoutResolveAuthorities() throws Exception {
-        authLookup.openConnection();
+        authLookup.openConnection(authDBProperties());
         Record record = authLookup.marcResolveAuthorities(marcRecord);
         assertEquals(record, marcRecord);
     }
@@ -96,7 +103,7 @@ public class AuthDBLookupTest {
     @Ignore("Requires stubs to resolve URIs")
     @Test
     public void marcWithResolveAuthorities() throws Exception {
-        authLookup.openConnection();
+        authLookup.openConnection(authDBProperties());
         Record record = authLookup.marcResolveAuthorities(marcRecord);
         assertNotEquals(record, marcRecord);
     }
