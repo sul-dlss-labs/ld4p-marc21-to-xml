@@ -1,5 +1,7 @@
 package edu.stanford;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.marc4j.marc.DataField;
 import org.marc4j.marc.MarcFactory;
 import org.marc4j.marc.Record;
@@ -22,39 +24,48 @@ import java.util.List;
  */
 class AuthDBLookup {
 
-    Connection authDB = null;
+    private static Logger log = LogManager.getLogger(AuthDBLookup.class.getName());
 
-    public void openConnection(AuthDBProperties authDBProperties) throws IOException, SQLException {
-        if ( authDB == null )
-            authDB = AuthDBConnection.open(authDBProperties);
+    AuthDBConnection authDBConnection;
+
+    Connection dbConnection;
+
+    void setAuthDBConnection(AuthDBConnection conn) {
+        authDBConnection = conn;
     }
 
-    public void closeConnection() throws SQLException {
-        authDB.close();
-        authDB = null;
+    void openConnection() throws IOException, SQLException {
+        if (dbConnection == null)
+            dbConnection = authDBConnection.open();
     }
 
-    public Record marcResolveAuthorities(Record record) {
+    void closeConnection() throws SQLException {
+        if (dbConnection != null) {
+            dbConnection.close();
+            dbConnection = null;
+        }
+    }
+
+    Record marcResolveAuthorities(Record record) {
         List subFieldList;
         DataField dataField;
         MarcFactory factory = MarcFactory.newInstance();
 
         List fields = record.getDataFields();
-        Iterator dataFieldIterator = fields.iterator();
 
-        while (dataFieldIterator.hasNext()) {
-            dataField = (DataField) dataFieldIterator.next();
+        for (Object field : fields) {
+            dataField = (DataField) field;
 
             subFieldList = dataField.getSubfields();
-            Object [] subFields = subFieldList.toArray(new Object[subFieldList.size()]);
+            Object[] subFields = subFieldList.toArray(new Object[subFieldList.size()]);
 
-            for (int s = 0; s < subFields.length; s++) {
-                Subfield sf = (Subfield) subFields[s];
+            for (Object subField : subFields) {
+                Subfield sf = (Subfield) subField;
                 char code = sf.getCode();
                 String codeStr = String.valueOf(code);
-                String data = sf.getData();
 
                 if (codeStr.equals("=")) {
+                    String data = sf.getData();
                     addAuthURIandRemoveSubfields(data, dataField, sf, factory);
                 }
                 if (codeStr.equals("?")) {
@@ -95,7 +106,7 @@ class AuthDBLookup {
     private String queryAuth(String sql) {
         String result = "";
         try {
-            Statement s = authDB.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+            Statement s = dbConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                     ResultSet.CONCUR_READ_ONLY);
             ResultSet rs = s.executeQuery(sql);
             while (rs.next()) {
@@ -105,6 +116,7 @@ class AuthDBLookup {
             s.close();
         } catch(SQLException e) {
             System.err.println("AuthDBLookup SQLException:" + e.getMessage());
+            log.error("AuthDBLookup SQLException", e);
         }
         return result;
     }
