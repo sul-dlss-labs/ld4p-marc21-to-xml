@@ -1,12 +1,13 @@
 package edu.stanford;
 
+import org.apache.commons.cli.*;
 import org.marc4j.MarcReader;
 import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcWriter;
 import org.marc4j.MarcXmlWriter;
 import org.marc4j.marc.Record;
 
-import java.io.*;
+import java.io.IOException;
 import java.sql.SQLException;
 
 /**
@@ -18,18 +19,45 @@ import java.sql.SQLException;
  */
 class MarcToXMLStream extends MarcConverterWithAuthorityLookup {
 
+    static String className = MarcToXMLStream.class.getName();
+
+    // Apache Commons-CLI Options
+    // https://commons.apache.org/proper/commons-cli/introduction.html
+    static CommandLine cmd = null;
+    static Options options = setOptions();
+
+    static Options setOptions() {
+        Options opts = new Options();
+        MarcConverterWithAuthorityLookup.addOptions(opts);
+        return opts;
+    }
+
+    static void parseArgs(String [] args) throws ParseException {
+        CommandLineParser parser = new DefaultParser();
+        cmd = parser.parse(options, args);
+        if (cmd.hasOption('h')) {
+            // Print the help message and exit
+            printHelp(className, options);
+            System.exit(0);
+        }
+        // Parse optional options
+        setAuthDBProperties(cmd);
+    }
+
     private static MarcReader marcReader = new MarcStreamReader(System.in);
     private static MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
 
-    public static void setMarcReader(MarcReader marcReader) {
-        MarcToXMLStream.marcReader = marcReader;
+    public static void setMarcReader(MarcReader reader) {
+        marcReader = reader;
     }
 
-    public static void setMarcWriter(MarcWriter marcWriter) {
-        MarcToXMLStream.marcWriter = marcWriter;
+    public static void setMarcWriter(MarcWriter writer) {
+        marcWriter = writer;
     }
 
-    public static void main (String [] args) throws IOException, SQLException {
+    public static void main (String [] args) throws IOException, SQLException, ParseException {
+        parseArgs(args);
+        authLookupInit();
         convertRecords();
         authLookupClose();
     }
