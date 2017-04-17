@@ -39,7 +39,7 @@ public class MarcToXMLTest {
     private static Path outputPath;
     private static String logFile;
 
-    private static String usage = "usage: edu.stanford.MarcToXML";
+    private static String usage = "usage: " + MarcToXML.className;
 
     // For additional test data, consider the marc4j data at
     // https://github.com/marc4j/marc4j/tree/master/test/resources
@@ -84,7 +84,7 @@ public class MarcToXMLTest {
         PrintStream stdout = System.out;
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
-        MarcToXML.printHelp();
+        MarcToXML.printHelp(MarcToXML.className, MarcToXML.options);
         assertThat(outContent.toString(), containsString(usage));
         System.setOut(stdout);
     }

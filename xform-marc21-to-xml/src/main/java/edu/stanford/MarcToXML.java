@@ -34,19 +34,16 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
     static CommandLine cmd = null;
     static Options options = setOptions();
 
+    static String className = MarcToXML.class.getName();
+
     static Options setOptions() {
         Options opts = new Options();
-        opts.addOption("h", "help", false, "help message");
         opts.addOption("i", "inputFile", true, "MARC input file (binary .mrc file expected; required)");
         opts.addOption("o", "outputPath", true, "MARC XML output path (default: ENV[\"LD4P_MARCXML\"])");
         opts.addOption("l", "logFile", true, "Log file output (default: " + logFileDefault + ")");
         opts.addOption("r", "replace", false, "Replace existing XML files (default: false)");
+        MarcConverterWithAuthorityLookup.addOptions(opts);
         return opts;
-    }
-
-    static void printHelp() {
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp(MarcToXML.class.getName(), options);
     }
 
     static String marcInputFile = null;
@@ -60,14 +57,14 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
         String iFile = cmd.getOptionValue("i");
         if (iFile == null) {
             System.err.println("ERROR: No MARC input file specified.");
-            printHelp();
+            printHelp(className, options);
             System.exit(1);
         }
         // Check the input file exists
         File marcFile = new File(iFile.trim());
         if (! marcFile.isFile()) {
             System.err.println("ERROR: MARC input file is not a file.");
-            printHelp();
+            printHelp(className, options);
             System.exit(1);
         }
         setMarcInputFile( marcFile.toString() );
@@ -100,14 +97,14 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
             oPath = System.getenv("LD4P_MARCXML");
         if (oPath == null) {
             System.err.println("ERROR: No MARC-XML output path specified.");
-            printHelp();
+            printHelp(className, options);
             System.exit(1);
         }
         // Check the output path exists
         File path = new File(oPath.trim());
         if (! path.isDirectory()) {
             System.err.println("ERROR: MARC-XML output path is not a directory.");
-            printHelp();
+            printHelp(className, options);
             System.exit(1);
         }
         setXmlOutputPath( path.toString() );
@@ -177,14 +174,15 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
     static void parseArgs(String [] args) throws ParseException {
         CommandLineParser parser = new DefaultParser();
         cmd = parser.parse(options, args);
-        // Print the help message and exit?
         if (cmd.hasOption('h')) {
-            printHelp();
+            // Print the help message and exit
+            printHelp(className, options);
             System.exit(0);
         }
         // Parse required options
         parseInputFile();
         // Parse optional options
+        setAuthDBProperties(cmd);
         parseOutputPath();
         parseLogFile();
         setXmlReplace( cmd.hasOption("r") );
