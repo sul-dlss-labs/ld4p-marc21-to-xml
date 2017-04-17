@@ -1,14 +1,18 @@
 package edu.stanford;
 
-import oracle.jdbc.pool.OracleDataSource;
-
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class AuthDBConnectionTest {
 
@@ -17,22 +21,48 @@ public class AuthDBConnectionTest {
     Packaged code config:  src/main/resources/server.conf
      */
 
-    @Test
-    public void setDataSource() throws Exception {
-        // Note about Field.get(Object obj):
-        // If the underlying field is a static field, the obj argument is ignored; it may be null.
-        Field field = AuthDBConnection.class.getDeclaredField("ds");
-        field.setAccessible(true);
-        assertNull(field.get(null));
-        AuthDBProperties authDBProperties = new AuthDBProperties();
-        AuthDBConnection.setDataSource(authDBProperties);
-        assertNotNull(field.get(null));
-        assertThat(field.get(null), instanceOf(OracleDataSource.class));
+    private AuthDBProperties authDBProperties;
+    private AuthDBConnection authDBConnection;
+
+    @Before
+    public void setUp() throws IOException {
+        authDBProperties = new AuthDBProperties();
+        authDBConnection = new AuthDBConnection();
+        authDBConnection.setAuthDBProperties(authDBProperties);
+    }
+
+    @After
+    public void tearDown() {
+        authDBProperties = null;
+        authDBConnection = null;
     }
 
     @Test
-    public void setDataSourceCache() throws Exception {
-        // TODO
+    public void open() throws IOException, SQLException {
+        Connection mockConnection = mock(Connection.class);
+        DataSource mockDataSource = mock(DataSource.class);
+        when(mockDataSource.getConnection()).thenReturn(mockConnection);
+        AuthDBConnection spyAuthDBConnection = spy(authDBConnection);
+        when(spyAuthDBConnection.dataSource()).thenReturn(mockDataSource);
+        Connection conn = spyAuthDBConnection.open();
+        assertNotNull(conn);
+        assertThat(conn, instanceOf(Connection.class));
+    }
+
+    @Test
+    public void dataSource() throws IOException, SQLException {
+        DataSource dataSource = authDBConnection.dataSource();
+        assertNotNull(dataSource);
+        assertThat(dataSource, instanceOf(DataSource.class));
+    }
+
+    @Test
+    public void dataSourceCache() throws Exception {
+        Properties cacheProps = authDBConnection.dataSourceCache();
+        assertEquals(cacheProps.getProperty("MinLimit"), "1");
+        assertEquals(cacheProps.getProperty("InitialLimit"), "1");
+        assertEquals(cacheProps.getProperty("AbandonedConnectionTimeout"), "100");
+        assertEquals(cacheProps.getProperty("PropertyCheckInterval"), "80");
     }
 
 }
