@@ -12,7 +12,6 @@ import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 public class AuthDBConnectionTest {
 
@@ -25,10 +24,9 @@ public class AuthDBConnectionTest {
     private AuthDBConnection authDBConnection;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, SQLException {
         authDBProperties = new AuthDBProperties();
-        authDBConnection = new AuthDBConnection();
-        authDBConnection.setAuthDBProperties(authDBProperties);
+        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
     }
 
     @After
@@ -38,13 +36,16 @@ public class AuthDBConnectionTest {
     }
 
     @Test
+    public void setAuthDBProperties() {
+        authDBConnection.setAuthDBProperties(authDBProperties);
+        assertNotNull(authDBConnection.authDBProperties);
+        assertSame(authDBConnection.authDBProperties, authDBProperties);
+    }
+
+
+    @Test
     public void open() throws IOException, SQLException {
-        Connection mockConnection = mock(Connection.class);
-        DataSource mockDataSource = mock(DataSource.class);
-        when(mockDataSource.getConnection()).thenReturn(mockConnection);
-        AuthDBConnection spyAuthDBConnection = spy(authDBConnection);
-        when(spyAuthDBConnection.dataSource()).thenReturn(mockDataSource);
-        Connection conn = spyAuthDBConnection.open();
+        Connection conn = authDBConnection.open();
         assertNotNull(conn);
         assertThat(conn, instanceOf(Connection.class));
     }
