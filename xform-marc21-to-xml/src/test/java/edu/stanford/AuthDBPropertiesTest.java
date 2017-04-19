@@ -90,6 +90,27 @@ public class AuthDBPropertiesTest {
     }
 
     @Test
+    public void testEqualsIsTrue() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        assertTrue(p1.equals(p2));
+        p1.setServer("serverA");
+        p2.setServer("serverA");
+        assertTrue(p1.equals(p2) && p2.equals(p1));
+        assertTrue(p1.hashCode() == p2.hashCode());
+    }
+
+    @Test
+    public void testEqualsIsFalse() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        p1.setServer("serverA");
+        p2.setServer("serverB");
+        assertFalse(p1.equals(p2));
+        assertFalse(p1.hashCode() == p2.hashCode());
+    }
+
+    @Test
     public void testServer() throws Exception {
         // Same code is used to test setter/getter
         String server = "test.server.org";

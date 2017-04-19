@@ -80,6 +80,37 @@ class AuthDBProperties {
         this.userPass = properties.getProperty("PASS");
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (!AuthDBProperties.class.isAssignableFrom(obj.getClass())) {
+            return false;
+        }
+        final AuthDBProperties other = (AuthDBProperties) obj;
+        if ((this.server == null) ? (other.server != null) : !this.server.equals(other.server))
+            return false;
+        if ((this.service == null) ? (other.service != null) : !this.service.equals(other.service))
+            return false;
+        if ((this.userName == null) ? (other.userName != null) : !this.userName.equals(other.userName))
+            return false;
+        if ((this.userPass == null) ? (other.userPass != null) : !this.userPass.equals(other.userPass))
+            return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int i = 42;
+        int hash = i;
+        hash = i * hash + this.server.hashCode();
+        hash = i * hash + this.service.hashCode();
+        hash = i * hash + this.userName.hashCode();
+        hash = i * hash + this.userPass.hashCode();
+        return hash;
+    }
+
     private Properties loadPropertyFile(String propertyFile) throws IOException {
         try {
             InputStream iStream = new FileInputStream(propertyFile);
@@ -111,4 +142,6 @@ class AuthDBProperties {
         log.debug( props.toString() );
         return props;
     }
+
+
 }
