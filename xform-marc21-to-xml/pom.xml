@@ -142,7 +142,13 @@
           <version>1.16.0</version>
           <scope>test</scope>
         </dependency>
-
+        <!--Replace Oracle with an in-memory database for unit tests -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.15.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
