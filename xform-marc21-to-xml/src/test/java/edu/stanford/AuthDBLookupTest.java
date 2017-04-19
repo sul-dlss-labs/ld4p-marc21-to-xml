@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.marc4j.MarcStreamReader;
 import org.marc4j.marc.Record;
 
-import javax.sql.DataSource;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
@@ -15,7 +14,6 @@ import java.sql.SQLException;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 /**
  *
@@ -28,25 +26,13 @@ public class AuthDBLookupTest {
     private final String marcFilePath = getClass().getResource(marcFileResource).getFile();
 
     private Record marcRecord;
-    //private Statement mockStatement;
-    private Connection mockConnection;
-    private DataSource mockDataSource;
-    private AuthDBProperties authDBProperties;
     private AuthDBConnection authDBConnection;
-    private AuthDBConnection spyAuthDBConnection;
     private AuthDBLookup authLookup;
 
     private void mockConnection() throws SQLException, IOException {
-        mockConnection = mock(Connection.class);
-        mockDataSource = mock(DataSource.class);
-        when(mockDataSource.getConnection()).thenReturn(mockConnection);
-        authDBProperties = new AuthDBProperties();
-        authDBConnection = new AuthDBConnection();
-        authDBConnection.setAuthDBProperties(authDBProperties);
-        spyAuthDBConnection = spy(authDBConnection);
-        when(spyAuthDBConnection.dataSource()).thenReturn(mockDataSource);
+        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
         authLookup = new AuthDBLookup();
-        authLookup.setAuthDBConnection(spyAuthDBConnection);
+        authLookup.setAuthDBConnection(authDBConnection);
     }
 
     @Before
@@ -59,12 +45,7 @@ public class AuthDBLookupTest {
 
     @After
     public void tearDown() throws Exception {
-        //mockStatement = null;
-        mockConnection = null;
-        mockDataSource = null;
-        spyAuthDBConnection = null;
         authDBConnection = null;
-        authDBProperties = null;
         authLookup = null;
     }
 
