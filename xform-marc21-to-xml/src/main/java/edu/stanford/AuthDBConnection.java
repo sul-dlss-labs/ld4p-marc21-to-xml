@@ -13,9 +13,9 @@ import java.util.Properties;
  */
 class AuthDBConnection {
 
-    private static Properties cacheProps;
+    static Properties cacheProps;
 
-    private AuthDBProperties authDBProperties;
+    AuthDBProperties authDBProperties;
 
     void setAuthDBProperties(AuthDBProperties props) {
         authDBProperties = props;
