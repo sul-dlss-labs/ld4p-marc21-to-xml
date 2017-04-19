@@ -43,4 +43,11 @@ public class SqliteUtils {
         return mockAuthDBConnection;
     }
 
+    static AuthDBLookup sqliteAuthDBLookup() throws IOException, SQLException {
+        AuthDBConnection authDBConnection = sqliteAuthDBConnection();
+        AuthDBLookup authLookup = new AuthDBLookup();
+        authLookup.setAuthDBConnection(authDBConnection);
+        return authLookup;
+    }
+
 }
