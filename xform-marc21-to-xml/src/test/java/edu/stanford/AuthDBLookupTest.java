@@ -4,10 +4,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.marc4j.MarcStreamReader;
 import org.marc4j.marc.Record;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -20,32 +18,21 @@ import static org.junit.Assert.*;
  */
 public class AuthDBLookupTest {
 
-    // For additional test data, consider the marc4j data at
-    // https://github.com/marc4j/marc4j/tree/master/test/resources
-    private final String marcFileResource = "/one_record.mrc";
-    private final String marcFilePath = getClass().getResource(marcFileResource).getFile();
-
+    private MarcUtils marcUtils;
     private Record marcRecord;
-    private AuthDBConnection authDBConnection;
     private AuthDBLookup authLookup;
 
-    private void mockConnection() throws SQLException, IOException {
-        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
-        authLookup = new AuthDBLookup();
-        authLookup.setAuthDBConnection(authDBConnection);
-    }
-
     @Before
-    public void setUp() throws IOException, SQLException {
-        mockConnection();
-        // Read a MARC record
-        MarcStreamReader marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
-        marcRecord = marcReader.next();
+    public void setUp() throws Exception {
+        marcUtils = new MarcUtils();
+        marcRecord = marcUtils.getMarcRecord();
+        authLookup = SqliteUtils.sqliteAuthDBLookup();
     }
 
     @After
     public void tearDown() throws Exception {
-        authDBConnection = null;
+        marcUtils.deleteOutputPath();
+        marcUtils = null;
         authLookup = null;
     }
 
