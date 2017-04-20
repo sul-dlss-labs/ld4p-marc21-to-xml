@@ -19,11 +19,38 @@ import java.sql.SQLException;
  */
 class MarcToXMLStream extends MarcConverterWithAuthorityLookup {
 
+    public static void main (String [] args) throws IOException, SQLException, ParseException {
+        MarcToXMLStream marcToXMLStream = new MarcToXMLStream();
+        marcToXMLStream.parseArgs(args);
+        marcToXMLStream.authLookupInit();
+        marcToXMLStream.convertRecords();
+        marcToXMLStream.authLookupClose();
+    }
+
+    void convertRecords() throws IOException, SQLException {
+        while (marcReader.hasNext()) {
+            Record record = marcReader.next();
+            marcWriter.write(authLookups(record));
+        }
+        marcWriter.close();
+    }
+
+    private MarcReader marcReader = new MarcStreamReader(System.in);
+    private MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
+
+    public void setMarcReader(MarcReader reader) {
+        marcReader = reader;
+    }
+
+    public void setMarcWriter(MarcWriter writer) {
+        marcWriter = writer;
+    }
+
     static String className = MarcToXMLStream.class.getName();
 
     // Apache Commons-CLI Options
     // https://commons.apache.org/proper/commons-cli/introduction.html
-    static CommandLine cmd = null;
+    CommandLine cmd = null;
     static Options options = setOptions();
 
     static Options setOptions() {
@@ -32,7 +59,7 @@ class MarcToXMLStream extends MarcConverterWithAuthorityLookup {
         return opts;
     }
 
-    static void parseArgs(String [] args) throws ParseException {
+    void parseArgs(String [] args) throws ParseException {
         CommandLineParser parser = new DefaultParser();
         cmd = parser.parse(options, args);
         if (cmd.hasOption('h')) {
@@ -42,32 +69,6 @@ class MarcToXMLStream extends MarcConverterWithAuthorityLookup {
         }
         // Parse optional options
         setAuthDBProperties(cmd);
-    }
-
-    private static MarcReader marcReader = new MarcStreamReader(System.in);
-    private static MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
-
-    public static void setMarcReader(MarcReader reader) {
-        marcReader = reader;
-    }
-
-    public static void setMarcWriter(MarcWriter writer) {
-        marcWriter = writer;
-    }
-
-    public static void main (String [] args) throws IOException, SQLException, ParseException {
-        parseArgs(args);
-        authLookupInit();
-        convertRecords();
-        authLookupClose();
-    }
-
-    static void convertRecords() throws IOException, SQLException {
-        while (marcReader.hasNext()) {
-            Record record = marcReader.next();
-            marcWriter.write(authLookups(record));
-        }
-        marcWriter.close();
     }
 
 }
