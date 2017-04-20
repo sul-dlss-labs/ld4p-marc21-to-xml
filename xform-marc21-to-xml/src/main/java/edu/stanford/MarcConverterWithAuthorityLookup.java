@@ -17,8 +17,8 @@ import java.sql.SQLException;
  */
 class MarcConverterWithAuthorityLookup {
 
-    static AuthDBProperties authDBProperties = null;
-    static AuthDBLookup authLookup = null;
+    AuthDBProperties authDBProperties;
+    AuthDBLookup authLookup;
 
     static void addOptions(Options opts) {
         opts.addOption("h", "help", false, "help message");
@@ -30,7 +30,7 @@ class MarcConverterWithAuthorityLookup {
         formatter.printHelp(className, options);
     }
 
-    static void setAuthDBProperties(CommandLine cmd) {
+    void setAuthDBProperties(CommandLine cmd) {
         // Set the authority-db properties
         try {
             if (cmd.hasOption("p")) {
@@ -48,18 +48,28 @@ class MarcConverterWithAuthorityLookup {
         }
     }
 
-    static Record authLookups(Record record) throws IOException, SQLException {
+    Record authLookups(Record record) throws IOException, SQLException {
+        authLookupInit();
         return authLookup.marcResolveAuthorities(record);
     }
 
-    static void authLookupInit() throws IOException, SQLException {
-        if (authLookup == null) {
-            authLookup = new AuthDBLookup();
-            authLookup.openConnection(authDBProperties);
-        }
+    void authLookupInit() throws IOException, SQLException {
+        if (authDBProperties == null)
+            authDBProperties = new AuthDBProperties();
+        if (authLookup == null)
+            authLookup = authLookupReset();
     }
 
-    static void authLookupClose() throws SQLException {
+    AuthDBLookup authLookupReset() throws IOException, SQLException {
+        AuthDBConnection authDBConnection = new AuthDBConnection();
+        authDBConnection.setAuthDBProperties(authDBProperties);
+        AuthDBLookup lookup = new AuthDBLookup();
+        lookup.setAuthDBConnection(authDBConnection);
+        lookup.openConnection();
+        return lookup;
+    }
+
+    void authLookupClose() throws SQLException {
         if (authLookup != null) {
             authLookup.closeConnection();
             authLookup = null;
