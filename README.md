@@ -71,6 +71,15 @@ To update Coveralls from the command line, try:
 
   `mvn clean test cobertura:cobertura coveralls:report -DrepoToken=yourcoverallsprojectrepositorytoken`
 
+### Security Vulnerability Reports
+
+To run the security vulnerability checks and view a report from the command line:
+```
+mvn clean verify
+ls -l xform-marc21-to-xml/target/dependency-check-report.html
+firefox xform-marc21-to-xml/target/dependency-check-report.html
+```
+
 ## Deployment
 
 Capistrano is used for deployment.
