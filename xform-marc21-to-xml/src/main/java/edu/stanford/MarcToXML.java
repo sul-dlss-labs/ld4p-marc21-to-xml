@@ -29,30 +29,49 @@ import java.sql.SQLException;
  */
 class MarcToXML extends MarcConverterWithAuthorityLookup {
 
-    // Apache Commons-CLI Options
-    // https://commons.apache.org/proper/commons-cli/introduction.html
-    static CommandLine cmd = null;
-    static Options options = setOptions();
-
-    static String className = MarcToXML.class.getName();
-
-    static Options setOptions() {
-        Options opts = new Options();
-        opts.addOption("i", "inputFile", true, "MARC input file (binary .mrc file expected; required)");
-        opts.addOption("o", "outputPath", true, "MARC XML output path (default: ENV[\"LD4P_MARCXML\"])");
-        opts.addOption("l", "logFile", true, "Log file output (default: " + logFileDefault + ")");
-        opts.addOption("r", "replace", false, "Replace existing XML files (default: false)");
-        MarcConverterWithAuthorityLookup.addOptions(opts);
-        return opts;
+    public static void main (String [] args) throws IOException, ParseException, SQLException {
+        MarcToXML marcToXML = new MarcToXML();
+        marcToXML.parseArgs(args);
+        marcToXML.authLookupInit();
+        marcToXML.convertMarcRecords();
+        marcToXML.authLookupClose();
     }
 
-    static String marcInputFile = null;
-
-    static void setMarcInputFile(String file) {
-        MarcToXML.marcInputFile = file;
+    void convertMarcRecords() throws FileNotFoundException {
+        setMarcReader();
+        while (marcReader.hasNext()) {
+            convertMarcRecord(marcReader.next());
+        }
     }
 
-    static void parseInputFile() {
+    void convertMarcRecord(Record record) {
+        try {
+            String xmlFilePath = xmlOutputFilePath(record);
+            File xmlFile = new File(xmlFilePath);
+            if (doConversion(xmlFile, xmlReplace)) {
+                MarcWriter writer = marcRecordWriter(xmlFilePath);
+                writer.write(authLookups(record));
+                writer.close();
+                log.info("Output MARC-XML file: " + xmlFilePath);
+            } else {
+                log.info("Skipped MARC-XML file: " + xmlFilePath);
+            }
+        }
+        catch (IOException | SQLException | NullPointerException | MarcException e) {
+            reportErrors(e);
+        }
+    }
+
+
+    // MARC input file
+
+    String marcInputFile = null;
+
+    void setMarcInputFile(String file) {
+        marcInputFile = file;
+    }
+
+    void parseInputFile() {
         // Parse and set the input file
         String iFile = cmd.getOptionValue("i");
         if (iFile == null) {
@@ -71,30 +90,61 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
     }
 
 
-    static MarcReader marcReader = null;
+    // MARC Reader and Writer
 
-    static void setMarcReader() throws FileNotFoundException {
+    MarcReader marcReader = null;
+
+    void setMarcReader() throws FileNotFoundException {
         FileInputStream marcInputFileStream = new FileInputStream(marcInputFile);
         marcReader = new MarcStreamReader(marcInputFileStream);
     }
 
-    static Boolean xmlReplace = false;
-
-    static void setXmlReplace(Boolean replace) {
-        MarcToXML.xmlReplace = replace;
+    MarcWriter marcRecordWriter(String filePath) throws FileNotFoundException {
+        OutputStream outFileStream = new FileOutputStream(filePath);
+        return new MarcXmlWriter(outFileStream, true);
     }
 
-    static String xmlOutputPath = null;
 
-    static void setXmlOutputPath(String path) {
-        MarcToXML.xmlOutputPath = path;
+    // Replace existing XML output files?
+
+    Boolean xmlReplace = false;
+
+    void setXmlReplace(Boolean replace) {
+        xmlReplace = replace;
     }
 
-    static void parseOutputPath() {
+    void parseXmlReplace() {
+        setXmlReplace( cmd.hasOption("r") );
+    }
+
+    Boolean doConversion(File xmlFile, Boolean xmlReplace) {
+        if (!xmlFile.exists() || xmlReplace) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+
+    // Output for XML files
+
+    String xmlOutputFilePath(Record record) {
+        String cn = record.getControlNumber();
+        String outFileName = cn.replaceAll(" ", "_").toLowerCase() + ".xml";
+        Path outFilePath = Paths.get(xmlOutputPath, outFileName);
+        return outFilePath.toString();
+    }
+
+    String xmlOutputPath = null;
+
+    void setXmlOutputPath(String path) {
+        xmlOutputPath = path;
+    }
+
+    void parseOutputPath() {
         // Parse and set the output path
         String oPath = cmd.getOptionValue("o");
-        if (oPath == null)
-            oPath = System.getenv("LD4P_MARCXML");
         if (oPath == null) {
             System.err.println("ERROR: No MARC-XML output path specified.");
             printHelp(className, options);
@@ -110,18 +160,26 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
         setXmlOutputPath( path.toString() );
     }
 
-    private static Logger log = null;
+
+    // Logging
+
+    void reportErrors(Exception e) {
+        log.fatal( "FAILED", e );
+        e.printStackTrace(System.err);
+    }
+
+    private Logger log = null;
 
     private static String logFileDefault = "log/MarcToXML.log";
 
-    static void setLogger(String logFile) {
+    void setLogger(String logFile) {
         // See src/main/resources/log4j2.xml for configuration details.
         // This method uses a programmatic approach to add a file logger.
         addLogFileAppender(logFile);
         log = LogManager.getLogger();
     }
 
-    static void parseLogFile() {
+    void parseLogFile() {
         // Parse and set the log file
         String logFile = cmd.getOptionValue("l");
         if (logFile == null)
@@ -129,7 +187,7 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
         setLogger( logFile.trim() );
     }
 
-    private static void addLogFileAppender(String filename) {
+    private void addLogFileAppender(String filename) {
         if (filename == null)
             return;
         String loggerName = MarcToXML.class.getName();
@@ -171,7 +229,25 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
         context.updateLoggers();
     }
 
-    static void parseArgs(String [] args) throws ParseException {
+
+    // Command line interface
+    // https://commons.apache.org/proper/commons-cli/introduction.html
+    CommandLine cmd = null;
+    static Options options = setOptions();
+
+    static String className = MarcToXML.class.getName();
+
+    static Options setOptions() {
+        Options opts = new Options();
+        opts.addOption("i", "inputFile", true, "MARC input file (binary .mrc file expected; required)");
+        opts.addOption("o", "outputPath", true, "MARC XML output path (default: ENV[\"LD4P_MARCXML\"])");
+        opts.addOption("l", "logFile", true, "Log file output (default: " + logFileDefault + ")");
+        opts.addOption("r", "replace", false, "Replace existing XML files (default: false)");
+        MarcConverterWithAuthorityLookup.addOptions(opts);
+        return opts;
+    }
+
+    void parseArgs(String [] args) throws ParseException {
         CommandLineParser parser = new DefaultParser();
         cmd = parser.parse(options, args);
         if (cmd.hasOption('h')) {
@@ -185,66 +261,7 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
         setAuthDBProperties(cmd);
         parseOutputPath();
         parseLogFile();
-        setXmlReplace( cmd.hasOption("r") );
+        parseXmlReplace();
     }
 
-    public static void main (String [] args) throws FileNotFoundException, ParseException, SQLException {
-        parseArgs(args);
-        convertMarcRecords();
-    }
-
-    static void convertMarcRecords() throws FileNotFoundException, SQLException {
-        setMarcReader();
-        while (marcReader.hasNext()) {
-            convertMarcRecord(marcReader.next());
-        }
-        authLookupClose();
-    }
-
-    static void convertMarcRecord(Record record) {
-        try {
-            String xmlFilePath = xmlOutputFilePath(record);
-            File xmlFile = new File(xmlFilePath);
-            if (doConversion(xmlFile, xmlReplace)) {
-                MarcWriter writer = marcRecordWriter(xmlFilePath);
-                writer.write(authLookups(record));
-                writer.close();
-                log.info("Output MARC-XML file: " + xmlFilePath);
-            } else {
-                log.info("Skipped MARC-XML file: " + xmlFilePath);
-            }
-        }
-        catch (IOException | SQLException | NullPointerException | MarcException e) {
-            reportErrors(e);
-        }
-    }
-
-    // TODO: move this method to a subclass of Record
-    static String xmlOutputFilePath(Record record) {
-        String cn = record.getControlNumber();
-        String outFileName = cn.replaceAll(" ", "_").toLowerCase() + ".xml";
-        Path outFilePath = Paths.get(xmlOutputPath, outFileName);
-        return outFilePath.toString();
-    }
-
-    static Boolean doConversion(File xmlFile, Boolean xmlReplace) {
-        if (!xmlFile.exists() || xmlReplace) {
-             return true;
-         }
-         else {
-             return false;
-         }
-    }
-
-    private static MarcWriter marcRecordWriter(String filePath) throws FileNotFoundException {
-        OutputStream outFileStream = new FileOutputStream(filePath);;
-        return new MarcXmlWriter(outFileStream, true);
-    }
-
-    private static void reportErrors(Exception e) {
-        String msg = e.getMessage();
-        log.fatal(msg);
-        System.err.println(msg);
-        //e.printStackTrace();
-    }
 }
