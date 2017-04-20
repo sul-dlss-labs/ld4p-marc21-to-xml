@@ -16,7 +16,7 @@ before_install:
 #install: - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
 script:
-  - mvn test -B  &&  mvn cobertura:cobertura coveralls:report
+  - mvn verify &&  mvn cobertura:cobertura coveralls:report
 
 # save cache
 
