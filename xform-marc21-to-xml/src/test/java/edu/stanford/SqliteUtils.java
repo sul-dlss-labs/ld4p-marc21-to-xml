@@ -8,7 +8,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 /**
  *
@@ -34,19 +35,14 @@ public class SqliteUtils {
     }
 
     static AuthDBConnection sqliteAuthDBConnection() throws IOException, SQLException {
-        AuthDBConnection mockAuthDBConnection = mock(AuthDBConnection.class);
-        when(mockAuthDBConnection.dataSource()).thenReturn(SqliteUtils.sqliteDataSource());
-        // All the other methods should call real methods.
-        when(mockAuthDBConnection.open()).thenCallRealMethod();
-        when(mockAuthDBConnection.dataSourceCache()).thenCallRealMethod();
-        doCallRealMethod().when(mockAuthDBConnection).setAuthDBProperties(any(AuthDBProperties.class));
-        return mockAuthDBConnection;
+        AuthDBConnection spyAuthDBConnection = spy(AuthDBConnection.class);
+        doReturn(SqliteUtils.sqliteDataSource()).when(spyAuthDBConnection).dataSource();
+        return spyAuthDBConnection;
     }
 
     static AuthDBLookup sqliteAuthDBLookup() throws IOException, SQLException {
-        AuthDBConnection authDBConnection = sqliteAuthDBConnection();
         AuthDBLookup authLookup = new AuthDBLookup();
-        authLookup.setAuthDBConnection(authDBConnection);
+        authLookup.setAuthDBConnection(sqliteAuthDBConnection());
         return authLookup;
     }
 
