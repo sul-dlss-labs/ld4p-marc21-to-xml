@@ -168,9 +168,11 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
         e.printStackTrace(System.err);
     }
 
-    private Logger log = null;
+    Logger log;
 
-    private static String logFileDefault = "log/MarcToXML.log";
+    String logFile;
+
+    static String logFileDefault = "log/MarcToXML.log";
 
     void setLogger(String logFile) {
         // See src/main/resources/log4j2.xml for configuration details.
@@ -181,7 +183,7 @@ class MarcToXML extends MarcConverterWithAuthorityLookup {
 
     void parseLogFile() {
         // Parse and set the log file
-        String logFile = cmd.getOptionValue("l");
+        logFile = cmd.getOptionValue("l");
         if (logFile == null)
             logFile = logFileDefault;
         setLogger( logFile.trim() );

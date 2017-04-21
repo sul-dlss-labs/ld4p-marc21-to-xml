@@ -1,13 +1,19 @@
 package edu.stanford;
 
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.runner.RunWith;
 import org.marc4j.MarcStreamReader;
 import org.marc4j.marc.Record;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -23,6 +29,9 @@ import static org.mockito.Mockito.*;
 /**
  *
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({ MarcToXML.class })
+@PowerMockIgnore({"oracle.jdbc.driver.*", "javax.management.*", "javax.security.*", "java.security.*"})
 public class MarcToXMLTest {
 
     @Rule
@@ -40,7 +49,6 @@ public class MarcToXMLTest {
 
     private void mockMarcToXML() throws Exception {
         marcToXML = spy(MarcToXML.class);
-        //marcToXML.authDBLookup = SqliteUtils.sqliteAuthDBLookup();
     }
 
     private void mockAuthException() throws Exception {
@@ -50,10 +58,16 @@ public class MarcToXMLTest {
 
     private void mockAuthLookups() throws Exception {
         mockMarcToXML();
+        marcToXML.authDBLookup = SqliteUtils.sqliteAuthDBLookup();
         Record record = marcUtils.getMarcRecord();
         doReturn(record).when(marcToXML).authLookups(any(Record.class));
-        doNothing().when(marcToXML).authLookupInit();
-        doNothing().when(marcToXML).authLookupClose();
+    }
+
+    // https://github.com/powermock/powermock/wiki/MockitoUsage#how-to-mock-construction-of-new-objects
+    private void mockMainInstantiation() throws Exception {
+        mockAuthLookups();
+        setupIO();
+        PowerMockito.whenNew(MarcToXML.class).withNoArguments().thenReturn(marcToXML);
     }
 
     @Before
@@ -101,6 +115,15 @@ public class MarcToXMLTest {
 
     // TODO: check what happens when long options are used instead of short options?
     // TODO: might need to check for the presence of each of them to get the value?
+
+    @Test
+    public void mainTest() throws Exception {
+        mockMainInstantiation();
+        String iFile = marcFilePath;
+        String oPath = outputPath.toString();
+        String[] args = new String[]{"-i " + iFile, "-o " + oPath};
+        MarcToXML.main(args);
+    }
 
     @Test
     public void mainHelp() throws ParseException, IOException, SQLException {
@@ -213,6 +236,7 @@ public class MarcToXMLTest {
 
     @Test
     public void mainOutputPathTest() throws Exception {
+        mockMainInstantiation();
         PrintStream stdout = System.out;
         PrintStream stderr = System.err;
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
@@ -269,57 +293,27 @@ public class MarcToXMLTest {
         }
     }
 
+    @Test
+    public void parseLogFileTest() throws IOException {
+        String testLogFile = marcUtils.createOutputFile("testLogFile", ".log").toString();
+        CommandLine cmd = mock(CommandLine.class);
+        when(cmd.hasOption("l")).thenReturn(true);
+        when(cmd.getOptionValue("l")).thenReturn(testLogFile);
+        marcToXML.cmd = cmd;
+        marcToXML.parseLogFile();
+        assertNotNull(marcToXML.log);
+        assertEquals(testLogFile, marcToXML.logFile);
+    }
 
-//    @Test
-//    public void mainXMLReplaceTrueTest() throws Exception {
-////        disableConversion();
-//        mockAuthLookups();
-//        PrintStream stdout = System.out;
-//        PrintStream stderr = System.err;
-//        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-//        System.setOut(new PrintStream(outContent));
-//        ByteArrayOutputStream errContent = new ByteArrayOutputStream();
-//        System.setErr(new PrintStream(errContent));
-//        String iFile = marcFilePath;
-//        String oPath = outputPath.toString();
-//        try {
-//            // Must provide valid args that are parsed prior to the -r flag
-//            String[] args = new String[] {"-i " + iFile, "-o " + oPath, "-r"};
-//            MarcToXML.main(args);
-//        } catch (SQLException e) {
-//            assertEquals(SQLException.class, e.getClass());
-//        } catch (ParseException e) {
-//            assertEquals(ParseException.class, e.getClass());
-//        } catch (FileNotFoundException e) {
-//            assertEquals(FileNotFoundException.class, e.getClass());
-//        } finally {
-//            assertEquals("", errContent.toString());
-//            assertEquals("", outContent.toString());
-//            System.setErr(stderr);
-//            System.setOut(stdout);
-//            assertEquals(true, MarcToXML.xmlReplace);
-//            MarcToXML.setXmlReplace(false);
-//        }
-//    }
-
-
-//    @Test
-//    public void outputFileNameTest() {
-//        PowerMockito.mockStatic(System.class);
-//        PowerMockito.when(System.getenv("LD4P_MARCXML")).thenReturn(outputPath.toString());
-//        String noFilePath = null;
-//        MarcToXML.setXmlOutputPath(noFilePath);
-//        assertEquals(System.getenv("LD4P_MARCXML"), MarcToXML.xmlOutputPath);
-//
-//        Record record = marcUtils.getMarcRecord();
-//        String result = MarcToXML.xmlOutputFilePath(record);
-//        assertTrue(result.contains(outputPath.toString()));
-//        String cn = record.getControlNumber();
-//        assertTrue(result.contains(cn));
-//        String fmt = ".xml";
-//        assertTrue(result.contains(fmt));
-//    }
-
+    @Test
+    public void parseLogFileDefaultTest() {
+        CommandLine cmd = mock(CommandLine.class);
+        when(cmd.hasOption("l")).thenReturn(false);
+        marcToXML.cmd = cmd;
+        marcToXML.parseLogFile();
+        assertNotNull(marcToXML.log);
+        assertEquals(MarcToXML.logFileDefault, marcToXML.logFile);
+    }
 
     @Test
     public void doConversionTrueTest() throws Exception {
