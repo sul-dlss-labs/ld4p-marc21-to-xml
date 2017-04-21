@@ -6,7 +6,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.runner.RunWith;
 import org.marc4j.marc.Record;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -25,6 +29,8 @@ import static org.mockito.Mockito.*;
 /**
  *
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({ MarcToXMLStream.class })
 public class MarcToXMLStreamTest {
 
     @Rule
@@ -33,13 +39,17 @@ public class MarcToXMLStreamTest {
     private static String usage = "usage: " + MarcToXMLStream.className;
 
     private MarcUtils marcUtils;
-//    private Record marcRecord;
 
+    private AuthDBProperties authDBProperties;
+    private AuthDBConnection authDBConnection;
+    private AuthDBLookup authDBLookup;
     private MarcToXMLStream marcToXMLStream;
 
     private void mockMarcToXMLStream() throws Exception {
         marcToXMLStream = spy(MarcToXMLStream.class);
-        //marcToXMLStream.authDBLookup = SqliteUtils.sqliteAuthDBLookup();
+        marcToXMLStream.authDBProperties = authDBProperties;
+        marcToXMLStream.authDBConnection = authDBConnection;
+        marcToXMLStream.authDBLookup = authDBLookup;
     }
 
     private void mockAuthException() throws Exception {
@@ -51,14 +61,14 @@ public class MarcToXMLStreamTest {
         mockMarcToXMLStream();
         Record record = marcUtils.getMarcRecord();
         doReturn(record).when(marcToXMLStream).authLookups(any(Record.class));
-        doNothing().when(marcToXMLStream).authLookupInit();
-        doNothing().when(marcToXMLStream).authLookupClose();
     }
 
     @Before
     public void setUp() throws Exception {
         marcUtils = new MarcUtils();
-//        marcRecord = marcUtils.getMarcRecord();
+        authDBProperties = new AuthDBProperties();
+        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
+        authDBLookup = SqliteUtils.sqliteAuthDBLookup();
         mockAuthLookups();
         marcToXMLStream.setMarcReader(marcUtils.getMarcReader());
         marcToXMLStream.setMarcWriter(marcUtils.getMarcWriter());
@@ -69,15 +79,17 @@ public class MarcToXMLStreamTest {
         marcUtils.deleteOutputPath();
         marcUtils = null;
         marcToXMLStream = null;
+        authDBLookup = null;
+        authDBConnection = null;
+        authDBProperties = null;
     }
 
-//    @Test
-//    public void mainTest() throws Exception {
-//        PowerMockito.whenNew(MarcToXMLStream.class).withNoArguments().thenReturn(marcToXMLStream);
-////        doNothing().when(marcToXMLStream).convertRecords();
-//        String [] args = new String[] {};
-//        MarcToXMLStream.main(args);
-//    }
+    @Test
+    public void mainTest() throws Exception {
+        PowerMockito.whenNew(MarcToXMLStream.class).withNoArguments().thenReturn(marcToXMLStream);
+        String [] args = new String[] {};
+        MarcToXMLStream.main(args);
+    }
 
     @Test
     public void mainHelp() throws IOException, ParseException, SQLException {
