@@ -88,11 +88,32 @@ public class MarcConverterWithAuthorityLookupTest {
     }
 
     @Test
+    public void authDBConnection_setAuthDBProperties() throws IOException, SQLException {
+        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
+        assertNull(marcConverterWithAuthorityLookup.authDBProperties);
+        assertNull(marcConverterWithAuthorityLookup.authDBConnection);
+        marcConverterWithAuthorityLookup.authDBConnection();
+        assertNotNull(marcConverterWithAuthorityLookup.authDBProperties);
+        assertEquals(authDBProperties, marcConverterWithAuthorityLookup.authDBProperties);
+    }
+
+    @Test
     public void authDBLookup() throws Exception {
         marcConverterWithAuthorityLookup.authDBConnection = authDBConnection;
         AuthDBLookup lookup = marcConverterWithAuthorityLookup.authDBLookup();
         assertNotNull(lookup);
         assertThat(lookup, instanceOf(AuthDBLookup.class));
+    }
+
+    @Test
+    public void authDBLookup_setAuthDBProperties() throws IOException, SQLException {
+        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
+        doReturn(authDBConnection).when(marcConverterWithAuthorityLookup).authDBConnection();
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
+        assertNull(marcConverterWithAuthorityLookup.authDBConnection);
+        marcConverterWithAuthorityLookup.authDBLookup();
+        assertNotNull(marcConverterWithAuthorityLookup.authDBConnection);
+        assertEquals(authDBConnection, marcConverterWithAuthorityLookup.authDBConnection);
     }
 
     @Test
@@ -105,18 +126,6 @@ public class MarcConverterWithAuthorityLookupTest {
         marcConverterWithAuthorityLookup.authLookupInit();
         assertNotNull(marcConverterWithAuthorityLookup.authDBLookup);
         assertThat(marcConverterWithAuthorityLookup.authDBLookup, instanceOf(AuthDBLookup.class));
-    }
-
-    @Test
-    public void authLookupInit_setAuthDBProperties() throws IOException, SQLException {
-        // Custom mocks for this test
-        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
-        doReturn(authDBLookup).when(marcConverterWithAuthorityLookup).authDBLookup();
-        // Test the authLookupInit()
-        assertNull(marcConverterWithAuthorityLookup.authDBProperties);
-        marcConverterWithAuthorityLookup.authLookupInit();
-        assertNotNull(marcConverterWithAuthorityLookup.authDBProperties);
-        assertEquals(authDBProperties, marcConverterWithAuthorityLookup.authDBProperties);
     }
 
     @Test

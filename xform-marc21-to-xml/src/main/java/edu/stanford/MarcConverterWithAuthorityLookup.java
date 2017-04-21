@@ -55,25 +55,8 @@ class MarcConverterWithAuthorityLookup {
     }
 
     void authLookupInit() throws IOException, SQLException {
-        if (authDBProperties == null)
-            authDBProperties = new AuthDBProperties();
-        if (authDBConnection == null)
-            authDBConnection = authDBConnection();
         if (authDBLookup == null)
             authDBLookup = authDBLookup();
-    }
-
-    AuthDBLookup authDBLookup() throws IOException, SQLException {
-        AuthDBLookup lookup = new AuthDBLookup();
-        lookup.setAuthDBConnection(authDBConnection);
-        lookup.openConnection();
-        return lookup;
-    }
-
-    AuthDBConnection authDBConnection() throws IOException, SQLException {
-        AuthDBConnection conn = new AuthDBConnection();
-        conn.setAuthDBProperties(authDBProperties);
-        return conn;
     }
 
     void authLookupClose() throws SQLException {
@@ -82,5 +65,27 @@ class MarcConverterWithAuthorityLookup {
             authDBLookup = null;
         }
     }
+
+    AuthDBLookup authDBLookup() throws IOException, SQLException {
+        if (authDBConnection == null)
+            authDBConnection = authDBConnection();
+        AuthDBLookup lookup = new AuthDBLookup();
+        lookup.setAuthDBConnection(authDBConnection);
+        lookup.openConnection();
+        return lookup;
+    }
+
+    AuthDBConnection authDBConnection() throws IOException, SQLException {
+        if (authDBProperties == null)
+            authDBProperties = authDBProperties();
+        AuthDBConnection conn = new AuthDBConnection();
+        conn.setAuthDBProperties(authDBProperties);
+        return conn;
+    }
+
+    AuthDBProperties authDBProperties() throws IOException, SQLException {
+        return new AuthDBProperties();
+    }
+
 }
 
