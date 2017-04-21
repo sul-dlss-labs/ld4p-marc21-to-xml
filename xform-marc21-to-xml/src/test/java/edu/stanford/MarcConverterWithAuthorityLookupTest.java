@@ -98,9 +98,8 @@ public class MarcConverterWithAuthorityLookupTest {
     @Test
     public void authLookupInit_setAuthDBLookup() throws Exception {
         // Custom mocks for this test
-        marcConverterWithAuthorityLookup = mock(MarcConverterWithAuthorityLookup.class);
-        when(marcConverterWithAuthorityLookup.authDBLookup()).thenReturn(authDBLookup);
-        doCallRealMethod().when(marcConverterWithAuthorityLookup).authLookupInit();
+        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
+        doReturn(authDBLookup).when(marcConverterWithAuthorityLookup).authDBLookup();
         // Test the authLookupInit()
         assertNull(marcConverterWithAuthorityLookup.authDBLookup);
         marcConverterWithAuthorityLookup.authLookupInit();
@@ -111,9 +110,8 @@ public class MarcConverterWithAuthorityLookupTest {
     @Test
     public void authLookupInit_setAuthDBProperties() throws IOException, SQLException {
         // Custom mocks for this test
-        marcConverterWithAuthorityLookup = mock(MarcConverterWithAuthorityLookup.class);
-        when(marcConverterWithAuthorityLookup.authDBLookup()).thenReturn(authDBLookup);
-        doCallRealMethod().when(marcConverterWithAuthorityLookup).authLookupInit();
+        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
+        doReturn(authDBLookup).when(marcConverterWithAuthorityLookup).authDBLookup();
         // Test the authLookupInit()
         assertNull(marcConverterWithAuthorityLookup.authDBProperties);
         marcConverterWithAuthorityLookup.authLookupInit();
