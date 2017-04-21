@@ -41,20 +41,23 @@ public class MarcConverterWithAuthorityLookupTest {
     private Record marcRecord;
 
     private AuthDBProperties authDBProperties;
+    private AuthDBConnection authDBConnection;
     private AuthDBLookup authDBLookup;
     private MarcConverterWithAuthorityLookup marcConverterWithAuthorityLookup;
 
     private void authLookupMocks() {
         marcConverterWithAuthorityLookup.authDBProperties = authDBProperties;
-        marcConverterWithAuthorityLookup.authLookup = authDBLookup;
+        marcConverterWithAuthorityLookup.authDBConnection = authDBConnection;
+        marcConverterWithAuthorityLookup.authDBLookup = authDBLookup;
     }
 
     @Before
     public void setUp() throws Exception {
         marcUtils = new MarcUtils();
         marcRecord = marcUtils.getMarcRecord();
-        authDBLookup = SqliteUtils.sqliteAuthDBLookup();
         authDBProperties = new AuthDBProperties();
+        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
+        authDBLookup = SqliteUtils.sqliteAuthDBLookup();
         marcConverterWithAuthorityLookup = new MarcConverterWithAuthorityLookup();
     }
 
@@ -63,6 +66,7 @@ public class MarcConverterWithAuthorityLookupTest {
         marcUtils.deleteOutputPath();
         marcUtils = null;
         authDBLookup = null;
+        authDBConnection = null;
         authDBProperties = null;
         marcConverterWithAuthorityLookup = null;
     }
@@ -76,23 +80,39 @@ public class MarcConverterWithAuthorityLookupTest {
     }
 
     @Test
+    public void authDBConnection() throws Exception {
+        marcConverterWithAuthorityLookup.authDBProperties = authDBProperties;
+        AuthDBConnection conn = marcConverterWithAuthorityLookup.authDBConnection();
+        assertNotNull(conn);
+        assertThat(conn, instanceOf(AuthDBConnection.class));
+    }
+
+    @Test
+    public void authDBLookup() throws Exception {
+        marcConverterWithAuthorityLookup.authDBConnection = authDBConnection;
+        AuthDBLookup lookup = marcConverterWithAuthorityLookup.authDBLookup();
+        assertNotNull(lookup);
+        assertThat(lookup, instanceOf(AuthDBLookup.class));
+    }
+
+    @Test
     public void authLookupInit_setAuthDBLookup() throws Exception {
         // Custom mocks for this test
         marcConverterWithAuthorityLookup = mock(MarcConverterWithAuthorityLookup.class);
-        when(marcConverterWithAuthorityLookup.authLookupReset()).thenReturn(authDBLookup);
+        when(marcConverterWithAuthorityLookup.authDBLookup()).thenReturn(authDBLookup);
         doCallRealMethod().when(marcConverterWithAuthorityLookup).authLookupInit();
         // Test the authLookupInit()
-        assertNull(marcConverterWithAuthorityLookup.authLookup);
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
         marcConverterWithAuthorityLookup.authLookupInit();
-        assertNotNull(marcConverterWithAuthorityLookup.authLookup);
-        assertThat(marcConverterWithAuthorityLookup.authLookup, instanceOf(AuthDBLookup.class));
+        assertNotNull(marcConverterWithAuthorityLookup.authDBLookup);
+        assertThat(marcConverterWithAuthorityLookup.authDBLookup, instanceOf(AuthDBLookup.class));
     }
 
     @Test
     public void authLookupInit_setAuthDBProperties() throws IOException, SQLException {
         // Custom mocks for this test
         marcConverterWithAuthorityLookup = mock(MarcConverterWithAuthorityLookup.class);
-        when(marcConverterWithAuthorityLookup.authLookupReset()).thenReturn(authDBLookup);
+        when(marcConverterWithAuthorityLookup.authDBLookup()).thenReturn(authDBLookup);
         doCallRealMethod().when(marcConverterWithAuthorityLookup).authLookupInit();
         // Test the authLookupInit()
         assertNull(marcConverterWithAuthorityLookup.authDBProperties);
@@ -104,16 +124,16 @@ public class MarcConverterWithAuthorityLookupTest {
     @Test
     public void authLookupClose() throws Exception {
         authLookupMocks();
-        assertNotNull(marcConverterWithAuthorityLookup.authLookup);
+        assertNotNull(marcConverterWithAuthorityLookup.authDBLookup);
         marcConverterWithAuthorityLookup.authLookupClose();
-        assertNull(marcConverterWithAuthorityLookup.authLookup);
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
     }
 
     @Test
     public void authLookupCloseWithoutInit() throws SQLException {
-        assertNull(marcConverterWithAuthorityLookup.authLookup);
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
         marcConverterWithAuthorityLookup.authLookupClose();
-        assertNull(marcConverterWithAuthorityLookup.authLookup);
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
     }
 
     @Test

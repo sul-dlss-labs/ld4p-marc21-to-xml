@@ -39,7 +39,7 @@ public class MarcToXMLStreamTest {
 
     private void mockMarcToXMLStream() throws Exception {
         marcToXMLStream = spy(MarcToXMLStream.class);
-        //marcToXMLStream.authLookup = SqliteUtils.sqliteAuthDBLookup();
+        //marcToXMLStream.authDBLookup = SqliteUtils.sqliteAuthDBLookup();
     }
 
     private void mockAuthException() throws Exception {

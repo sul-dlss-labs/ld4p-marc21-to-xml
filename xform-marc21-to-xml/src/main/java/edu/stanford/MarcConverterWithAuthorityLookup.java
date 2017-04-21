@@ -18,7 +18,8 @@ import java.sql.SQLException;
 class MarcConverterWithAuthorityLookup {
 
     AuthDBProperties authDBProperties;
-    AuthDBLookup authLookup;
+    AuthDBConnection authDBConnection;
+    AuthDBLookup authDBLookup;
 
     static void addOptions(Options opts) {
         opts.addOption("h", "help", false, "help message");
@@ -50,29 +51,35 @@ class MarcConverterWithAuthorityLookup {
 
     Record authLookups(Record record) throws IOException, SQLException {
         authLookupInit();
-        return authLookup.marcResolveAuthorities(record);
+        return authDBLookup.marcResolveAuthorities(record);
     }
 
     void authLookupInit() throws IOException, SQLException {
         if (authDBProperties == null)
             authDBProperties = new AuthDBProperties();
-        if (authLookup == null)
-            authLookup = authLookupReset();
+        if (authDBConnection == null)
+            authDBConnection = authDBConnection();
+        if (authDBLookup == null)
+            authDBLookup = authDBLookup();
     }
 
-    AuthDBLookup authLookupReset() throws IOException, SQLException {
-        AuthDBConnection authDBConnection = new AuthDBConnection();
-        authDBConnection.setAuthDBProperties(authDBProperties);
+    AuthDBLookup authDBLookup() throws IOException, SQLException {
         AuthDBLookup lookup = new AuthDBLookup();
         lookup.setAuthDBConnection(authDBConnection);
         lookup.openConnection();
         return lookup;
     }
 
+    AuthDBConnection authDBConnection() throws IOException, SQLException {
+        AuthDBConnection conn = new AuthDBConnection();
+        conn.setAuthDBProperties(authDBProperties);
+        return conn;
+    }
+
     void authLookupClose() throws SQLException {
-        if (authLookup != null) {
-            authLookup.closeConnection();
-            authLookup = null;
+        if (authDBLookup != null) {
+            authDBLookup.closeConnection();
+            authDBLookup = null;
         }
     }
 }

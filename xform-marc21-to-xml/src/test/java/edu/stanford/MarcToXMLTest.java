@@ -40,7 +40,7 @@ public class MarcToXMLTest {
 
     private void mockMarcToXML() throws Exception {
         marcToXML = spy(MarcToXML.class);
-        //marcToXML.authLookup = SqliteUtils.sqliteAuthDBLookup();
+        //marcToXML.authDBLookup = SqliteUtils.sqliteAuthDBLookup();
     }
 
     private void mockAuthException() throws Exception {
