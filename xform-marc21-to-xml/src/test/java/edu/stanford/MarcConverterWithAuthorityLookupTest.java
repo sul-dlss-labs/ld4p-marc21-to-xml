@@ -37,7 +37,7 @@ public class MarcConverterWithAuthorityLookupTest {
         return cmd;
     }
 
-    private MarcUtils marcUtils;
+    private MarcTestUtils marcTestUtils;
     private Record marcRecord;
 
     private AuthDBProperties authDBProperties;
@@ -53,18 +53,18 @@ public class MarcConverterWithAuthorityLookupTest {
 
     @Before
     public void setUp() throws Exception {
-        marcUtils = new MarcUtils();
-        marcRecord = marcUtils.getMarcRecord();
+        marcTestUtils = new MarcTestUtils();
+        marcRecord = marcTestUtils.getMarcRecord();
         authDBProperties = new AuthDBProperties();
-        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
-        authDBLookup = SqliteUtils.sqliteAuthDBLookup();
+        authDBConnection = SqliteTestUtils.sqliteAuthDBConnection();
+        authDBLookup = SqliteTestUtils.sqliteAuthDBLookup();
         marcConverterWithAuthorityLookup = new MarcConverterWithAuthorityLookup();
     }
 
     @After
     public void tearDown() throws IOException {
-        marcUtils.deleteOutputPath();
-        marcUtils = null;
+        marcTestUtils.deleteOutputPath();
+        marcTestUtils = null;
         authDBLookup = null;
         authDBConnection = null;
         authDBProperties = null;

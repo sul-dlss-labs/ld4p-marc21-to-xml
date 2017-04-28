@@ -44,7 +44,7 @@ public class MarcToXMLTest {
 
     private String marcFilePath;
 
-    private MarcUtils marcUtils;
+    private MarcTestUtils marcTestUtils;
     private MarcToXML marcToXML;
 
     private void mockMarcToXML() throws Exception {
@@ -58,8 +58,8 @@ public class MarcToXMLTest {
 
     private void mockAuthLookups() throws Exception {
         mockMarcToXML();
-        marcToXML.authDBLookup = SqliteUtils.sqliteAuthDBLookup();
-        Record record = marcUtils.getMarcRecord();
+        marcToXML.authDBLookup = SqliteTestUtils.sqliteAuthDBLookup();
+        Record record = marcTestUtils.getMarcRecord();
         doReturn(record).when(marcToXML).authLookups(any(Record.class));
     }
 
@@ -72,10 +72,10 @@ public class MarcToXMLTest {
 
     @Before
     public void setUp() throws IOException {
-        marcUtils = new MarcUtils();
-        marcUtils.createOutputPath();
-        outputPath = marcUtils.outputPath;
-        marcFilePath = marcUtils.marcFilePath;
+        marcTestUtils = new MarcTestUtils();
+        marcTestUtils.createOutputPath();
+        outputPath = marcTestUtils.outputPath;
+        marcFilePath = marcTestUtils.marcFilePath;
         marcToXML = new MarcToXML();
     }
 
@@ -86,8 +86,8 @@ public class MarcToXMLTest {
         marcFilePath = null;
         outputPath = null;
         logFile = null;
-        marcUtils.deleteOutputPath();
-        marcUtils = null;
+        marcTestUtils.deleteOutputPath();
+        marcTestUtils = null;
     }
 
     private void setupIO() throws IOException {
@@ -109,7 +109,7 @@ public class MarcToXMLTest {
     }
 
     private void setupLogger() throws IOException {
-        logFile = marcUtils.createOutputFile("MarcToXMLTest", ".log").toString();
+        logFile = marcTestUtils.createOutputFile("MarcToXMLTest", ".log").toString();
         marcToXML.setLogger(logFile);
     }
 
@@ -274,7 +274,7 @@ public class MarcToXMLTest {
         ByteArrayOutputStream errContent = new ByteArrayOutputStream();
         System.setErr(new PrintStream(errContent));
         String iFile = marcFilePath;
-        String oPath = marcUtils.createOutputFile("outputFileIsNotDirectory", ".xml").toString();
+        String oPath = marcTestUtils.createOutputFile("outputFileIsNotDirectory", ".xml").toString();
         try {
             String[] args = new String[] {"-i " + iFile, "-o " + oPath};
             MarcToXML.main(args);
@@ -295,7 +295,7 @@ public class MarcToXMLTest {
 
     @Test
     public void parseLogFileTest() throws IOException {
-        String testLogFile = marcUtils.createOutputFile("testLogFile", ".log").toString();
+        String testLogFile = marcTestUtils.createOutputFile("testLogFile", ".log").toString();
         CommandLine cmd = mock(CommandLine.class);
         when(cmd.hasOption("l")).thenReturn(true);
         when(cmd.getOptionValue("l")).thenReturn(testLogFile);
@@ -318,7 +318,7 @@ public class MarcToXMLTest {
     @Test
     public void doConversionTrueTest() throws Exception {
         setupOutput();
-        Record record = marcUtils.getMarcRecord();
+        Record record = marcTestUtils.getMarcRecord();
         String marcXmlFilePath = marcToXML.xmlOutputFilePath(record);
         File file = new File(marcXmlFilePath);
         assertFalse(file.exists());
@@ -328,7 +328,7 @@ public class MarcToXMLTest {
 
     @Test
     public void doConversionReplaceTest() throws IOException {
-        File file = marcUtils.createOutputFile("replaceXML", ".xml").toFile();
+        File file = marcTestUtils.createOutputFile("replaceXML", ".xml").toFile();
         assertTrue(file.exists());
         marcToXML.setXmlReplace(true);
         assertTrue(marcToXML.xmlReplace);
@@ -337,7 +337,7 @@ public class MarcToXMLTest {
 
     @Test
     public void doConversionWithoutReplaceTest() throws IOException {
-        File file = marcUtils.createOutputFile("replaceXML", ".xml").toFile();
+        File file = marcTestUtils.createOutputFile("replaceXML", ".xml").toFile();
         assertTrue(file.exists());
         assertFalse(marcToXML.xmlReplace);
         assertFalse(marcToXML.doConversion(file, marcToXML.xmlReplace));
@@ -347,7 +347,7 @@ public class MarcToXMLTest {
     public void convertRecordTest() throws Exception {
         mockAuthLookups();
         setupIO();
-        Record record = marcUtils.getMarcRecord();
+        Record record = marcTestUtils.getMarcRecord();
         String marcXmlFilePath = marcToXML.xmlOutputFilePath(record);
         File file = new File(marcXmlFilePath);
         assertFalse(file.exists());
@@ -362,7 +362,7 @@ public class MarcToXMLTest {
         mockAuthLookups();
         setupIO();
         // Convert the record and get its file path
-        Record record = marcUtils.getMarcRecord();
+        Record record = marcTestUtils.getMarcRecord();
         String marcXmlFilePath = marcToXML.xmlOutputFilePath(record);
         File marcXmlFile = new File(marcXmlFilePath);
         assertFalse(marcXmlFile.exists());
@@ -387,7 +387,7 @@ public class MarcToXMLTest {
     public void convertRecordSkipTest() throws Exception {
         mockAuthLookups();
         setupIO();
-        Record record = marcUtils.getMarcRecord();
+        Record record = marcTestUtils.getMarcRecord();
         String marcXmlFilePath = marcToXML.xmlOutputFilePath(record);
         File marcXmlFile = new File(marcXmlFilePath);
         assertFalse(marcXmlFile.exists());

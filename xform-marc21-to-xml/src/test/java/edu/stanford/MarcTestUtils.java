@@ -16,7 +16,7 @@ import static java.nio.file.Files.createTempFile;
 /**
  *
  */
-public class MarcUtils {
+public class MarcTestUtils {
 
     // For additional test data, consider the marc4j data at
     // https://github.com/marc4j/marc4j/tree/master/test/resources

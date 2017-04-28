@@ -38,7 +38,7 @@ public class MarcToXMLStreamTest {
 
     private static String usage = "usage: " + MarcToXMLStream.className;
 
-    private MarcUtils marcUtils;
+    private MarcTestUtils marcTestUtils;
 
     private AuthDBProperties authDBProperties;
     private AuthDBConnection authDBConnection;
@@ -59,25 +59,25 @@ public class MarcToXMLStreamTest {
 
     private void mockAuthLookups() throws Exception {
         mockMarcToXMLStream();
-        Record record = marcUtils.getMarcRecord();
+        Record record = marcTestUtils.getMarcRecord();
         doReturn(record).when(marcToXMLStream).authLookups(any(Record.class));
     }
 
     @Before
     public void setUp() throws Exception {
-        marcUtils = new MarcUtils();
+        marcTestUtils = new MarcTestUtils();
         authDBProperties = new AuthDBProperties();
-        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
-        authDBLookup = SqliteUtils.sqliteAuthDBLookup();
+        authDBConnection = SqliteTestUtils.sqliteAuthDBConnection();
+        authDBLookup = SqliteTestUtils.sqliteAuthDBLookup();
         mockAuthLookups();
-        marcToXMLStream.setMarcReader(marcUtils.getMarcReader());
-        marcToXMLStream.setMarcWriter(marcUtils.getMarcWriter());
+        marcToXMLStream.setMarcReader(marcTestUtils.getMarcReader());
+        marcToXMLStream.setMarcWriter(marcTestUtils.getMarcWriter());
     }
 
     @After
     public void tearDown() throws IOException {
-        marcUtils.deleteOutputPath();
-        marcUtils = null;
+        marcTestUtils.deleteOutputPath();
+        marcTestUtils = null;
         marcToXMLStream = null;
         authDBLookup = null;
         authDBConnection = null;
@@ -105,7 +105,7 @@ public class MarcToXMLStreamTest {
 
     @Test
     public void convertRecordsTest() throws Exception {
-        Path marcOutput = marcUtils.outputFile;
+        Path marcOutput = marcTestUtils.outputFile;
         File marcXmlFile = marcOutput.toFile();
         assertTrue(marcXmlFile.exists());  // setUp() creates a temporary file
         long modifiedA = marcXmlFile.lastModified();

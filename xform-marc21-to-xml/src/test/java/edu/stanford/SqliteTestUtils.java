@@ -14,7 +14,7 @@ import static org.mockito.Mockito.spy;
 /**
  *
  */
-public class SqliteUtils {
+public class SqliteTestUtils {
 
     static Connection sqliteConnection() {
         Connection connection = null;
@@ -36,7 +36,7 @@ public class SqliteUtils {
 
     static AuthDBConnection sqliteAuthDBConnection() throws IOException, SQLException {
         AuthDBConnection spyAuthDBConnection = spy(AuthDBConnection.class);
-        doReturn(SqliteUtils.sqliteDataSource()).when(spyAuthDBConnection).dataSource();
+        doReturn(SqliteTestUtils.sqliteDataSource()).when(spyAuthDBConnection).dataSource();
         return spyAuthDBConnection;
     }
 

@@ -26,7 +26,7 @@ public class AuthDBConnectionTest {
     @Before
     public void setUp() throws IOException, SQLException {
         authDBProperties = new AuthDBProperties();
-        authDBConnection = SqliteUtils.sqliteAuthDBConnection();
+        authDBConnection = SqliteTestUtils.sqliteAuthDBConnection();
     }
 
     @After

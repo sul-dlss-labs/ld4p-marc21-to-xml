@@ -18,21 +18,21 @@ import static org.junit.Assert.*;
  */
 public class AuthDBLookupTest {
 
-    private MarcUtils marcUtils;
+    private MarcTestUtils marcTestUtils;
     private Record marcRecord;
     private AuthDBLookup authLookup;
 
     @Before
     public void setUp() throws Exception {
-        marcUtils = new MarcUtils();
-        marcRecord = marcUtils.getMarcRecord();
-        authLookup = SqliteUtils.sqliteAuthDBLookup();
+        marcTestUtils = new MarcTestUtils();
+        marcRecord = marcTestUtils.getMarcRecord();
+        authLookup = SqliteTestUtils.sqliteAuthDBLookup();
     }
 
     @After
     public void tearDown() throws Exception {
-        marcUtils.deleteOutputPath();
-        marcUtils = null;
+        marcTestUtils.deleteOutputPath();
+        marcTestUtils = null;
         authLookup = null;
     }
 
