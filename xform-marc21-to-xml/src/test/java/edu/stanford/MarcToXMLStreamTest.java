@@ -1,92 +1,120 @@
 package edu.stanford;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.cli.ParseException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.runner.RunWith;
-import org.marc4j.MarcStreamReader;
-import org.marc4j.MarcWriter;
-import org.marc4j.MarcXmlWriter;
 import org.marc4j.marc.Record;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
-import static java.nio.file.Files.createTempDirectory;
-import static java.nio.file.Files.createTempFile;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  *
  */
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.management.*"})
-@PrepareForTest({ MarcToXMLStream.class, MarcConverterWithAuthorityLookup.class })
+@PrepareForTest({ MarcToXMLStream.class })
 public class MarcToXMLStreamTest {
 
-    private static Path outputPath;
-    private static Path outputFile;
+    @Rule
+    public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
-    // For additional test data, consider the marc4j data at
-    // https://github.com/marc4j/marc4j/tree/master/test/resources
-    private final String marcFileResource = "/one_record.mrc";
-    private final String marcFilePath = getClass().getResource(marcFileResource).getFile();
+    private static String usage = "usage: " + MarcToXMLStream.className;
+
+    private MarcTestUtils marcTestUtils;
+
+    private AuthDBProperties authDBProperties;
+    private AuthDBConnection authDBConnection;
+    private AuthDBLookup authDBLookup;
+    private MarcToXMLStream marcToXMLStream;
+
+    private void mockMarcToXMLStream() throws Exception {
+        marcToXMLStream = spy(MarcToXMLStream.class);
+        marcToXMLStream.authDBProperties = authDBProperties;
+        marcToXMLStream.authDBConnection = authDBConnection;
+        marcToXMLStream.authDBLookup = authDBLookup;
+    }
+
+    private void mockAuthException() throws Exception {
+        mockMarcToXMLStream();
+        doThrow(new SQLException("SQL exception message")).when(marcToXMLStream).authLookups(any(Record.class));
+    }
+
+    private void mockAuthLookups() throws Exception {
+        mockMarcToXMLStream();
+        Record record = marcTestUtils.getMarcRecord();
+        doReturn(record).when(marcToXMLStream).authLookups(any(Record.class));
+    }
 
     @Before
-    public void setUp() throws IOException {
-        // Set the MARC file reader
-        MarcStreamReader marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
-        MarcToXMLStream.setMarcReader(marcReader); // usually STDIN
-        // Output MARC-XML where these tests can access it easily.
-        outputPath = createTempDirectory("MarcToXMLStreamTest_");
-        outputFile = createTempFile(outputPath, "marc_record", "xml");
-        OutputStream outFileStream = new FileOutputStream(outputFile.toString());
-        MarcWriter marcWriter = new MarcXmlWriter(outFileStream, true);
-        MarcToXMLStream.setMarcWriter(marcWriter); // usually STDOUT
+    public void setUp() throws Exception {
+        marcTestUtils = new MarcTestUtils();
+        authDBProperties = new AuthDBProperties();
+        authDBConnection = SqliteTestUtils.sqliteAuthDBConnection();
+        authDBLookup = SqliteTestUtils.sqliteAuthDBLookup();
+        mockAuthLookups();
+        marcToXMLStream.setMarcReader(marcTestUtils.getMarcReader());
+        marcToXMLStream.setMarcWriter(marcTestUtils.getMarcWriter());
     }
 
     @After
     public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(outputPath.toFile());
+        marcTestUtils.deleteOutputPath();
+        marcTestUtils = null;
+        marcToXMLStream = null;
+        authDBLookup = null;
+        authDBConnection = null;
+        authDBProperties = null;
     }
 
     @Test
     public void mainTest() throws Exception {
-        PowerMockito.spy(MarcToXMLStream.class);
-        PowerMockito.doNothing().when(MarcToXMLStream.class, "convertRecords");
+        PowerMockito.whenNew(MarcToXMLStream.class).withNoArguments().thenReturn(marcToXMLStream);
         String [] args = new String[] {};
         MarcToXMLStream.main(args);
     }
 
     @Test
+    public void mainHelp() throws IOException, ParseException, SQLException {
+        exit.expectSystemExit();
+        PrintStream stdout = System.out;
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        String[] args = new String[]{"-h"};
+        MarcToXMLStream.main(args);
+        assertThat(outContent.toString(), containsString(usage));
+        System.setOut(stdout);
+    }
+
+    @Test
     public void convertRecordsTest() throws Exception {
-        File marcXmlFile = outputFile.toFile();
+        Path marcOutput = marcTestUtils.outputFile;
+        File marcXmlFile = marcOutput.toFile();
         assertTrue(marcXmlFile.exists());  // setUp() creates a temporary file
         long modifiedA = marcXmlFile.lastModified();
         // Does the file get updated?
         TimeUnit.SECONDS.sleep(1); // delay so file.lastModified() is different
-        stubAuthLookups();
-        MarcToXMLStream.convertRecords();
+        marcToXMLStream.convertRecords();
         long modifiedB = marcXmlFile.lastModified();
         assertTrue(modifiedA < modifiedB);
-        assertTrue(MarcXMLValidator.valid(outputFile.toString()));
-    }
-
-    private void stubAuthLookups() throws Exception {
-        MarcStreamReader reader = new MarcStreamReader(new FileInputStream(marcFilePath));
-        Record marcRecord = reader.next();
-        reader = null;
-        PowerMockito.mockStatic(MarcConverterWithAuthorityLookup.class);
-        PowerMockito.when(MarcConverterWithAuthorityLookup.authLookups(Mockito.any())).thenReturn(marcRecord);
-        PowerMockito.doNothing().when(MarcConverterWithAuthorityLookup.class, "authLookupInit");
-        PowerMockito.doNothing().when(MarcConverterWithAuthorityLookup.class, "authLookupClose");
+        assertTrue(MarcXMLValidator.valid(marcOutput.toString()));
     }
 
 }

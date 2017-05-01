@@ -26,16 +26,24 @@ On success, this creates `lib/xform-marc21-to-xml-jar-with-dependencies.jar`, wh
 includes all dependencies.  The packaged JAR can be copied to a convenient location
 and used on the CLASSPATH or the command line, e.g.
 ```
-$ LD4P_JAR=$(pwd)/lib/xform-marc21-to-xml-jar-with-dependencies.jar
 $ java -cp ${LD4P_JAR} edu.stanford.MarcToXML -h
 usage: edu.stanford.MarcToXML
- -h,--help               help message
- -i,--inputFile <arg>    MARC input file (binary .mrc file expected;
-                         required)
- -l,--logFile <arg>      Log file output (default: log/MarcToXML.log)
- -o,--outputPath <arg>   MARC XML output path (default:
-                         ENV["LD4P_MARCXML"])
- -r,--replace            Replace existing XML files (default: false)
+ -h,--help                          help message
+ -i,--inputFile <arg>               MARC input file (binary .mrc file
+                                    expected; required)
+ -l,--logFile <arg>                 Log file output (default: null)
+ -o,--outputPath <arg>              MARC XML output path (default:
+                                    ENV["LD4P_MARCXML"])
+ -p,--auth-db-property-file <arg>   Authority DB connection property file
+ -r,--replace                       Replace existing XML files (default:
+                                    false)
+```
+
+```
+$ java -cp ${LD4P_JAR} edu.stanford.MarcToXMLStream -h
+usage: edu.stanford.MarcToXMLStream
+ -h,--help                          help message
+ -p,--auth-db-property-file <arg>   Authority DB connection property file
 ```
 
 The `edu.stanford.MarcToXML` utility has command line options (as above) to specify

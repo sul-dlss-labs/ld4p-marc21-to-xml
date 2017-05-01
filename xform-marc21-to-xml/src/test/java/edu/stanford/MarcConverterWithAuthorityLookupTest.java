@@ -1,76 +1,195 @@
 package edu.stanford;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.marc4j.MarcStreamReader;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.marc4j.marc.Record;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.FileInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.sql.Connection;
+import java.io.PrintStream;
 import java.sql.SQLException;
 
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({AuthDBConnection.class})
 public class MarcConverterWithAuthorityLookupTest {
 
-    // For additional test data, consider the marc4j data at
-    // https://github.com/marc4j/marc4j/tree/master/test/resources
-    private final String marcFileResource = "/one_record.mrc";
-    private final String marcFilePath = getClass().getResource(marcFileResource).getFile();
+    @Rule
+    public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
-    private Connection mockConnection = null;
+    private final String serverConfResource = "/server.conf";
+    private final String serverConfPath = getClass().getResource(serverConfResource).getFile();
 
-    private void mockConnection() throws IOException, SQLException {
-        mockConnection = Mockito.mock(Connection.class);
-        PowerMockito.mockStatic(AuthDBConnection.class);
-        Mockito.when(AuthDBConnection.open()).thenReturn(mockConnection);
+    private CommandLine mockCommandLine(String serverConf) {
+        CommandLine cmd = mock(CommandLine.class);
+        when(cmd.hasOption("p")).thenReturn(true);
+        when(cmd.getOptionValue("p")).thenReturn(serverConf);
+        return cmd;
+    }
+
+    private MarcTestUtils marcTestUtils;
+    private Record marcRecord;
+
+    private AuthDBProperties authDBProperties;
+    private AuthDBConnection authDBConnection;
+    private AuthDBLookup authDBLookup;
+    private MarcConverterWithAuthorityLookup marcConverterWithAuthorityLookup;
+
+    private void authLookupMocks() {
+        marcConverterWithAuthorityLookup.authDBProperties = authDBProperties;
+        marcConverterWithAuthorityLookup.authDBConnection = authDBConnection;
+        marcConverterWithAuthorityLookup.authDBLookup = authDBLookup;
     }
 
     @Before
     public void setUp() throws Exception {
-        mockConnection();
+        marcTestUtils = new MarcTestUtils();
+        marcRecord = marcTestUtils.getMarcRecord();
+        authDBProperties = new AuthDBProperties();
+        authDBConnection = SqliteTestUtils.sqliteAuthDBConnection();
+        authDBLookup = SqliteTestUtils.sqliteAuthDBLookup();
+        marcConverterWithAuthorityLookup = new MarcConverterWithAuthorityLookup();
     }
 
     @After
-    public void tearDown() throws Exception {
-        mockConnection = null;
+    public void tearDown() throws IOException {
+        marcTestUtils.deleteOutputPath();
+        marcTestUtils = null;
+        authDBLookup = null;
+        authDBConnection = null;
+        authDBProperties = null;
+        marcConverterWithAuthorityLookup = null;
     }
 
     @Test
     public void authLookups() throws Exception {
-        MarcConverterWithAuthorityLookup.authLookupInit();
-        MarcStreamReader marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
-        Record marcRecord = marcReader.next();
-        Record record = MarcConverterWithAuthorityLookup.authLookups(marcRecord);
+        authLookupMocks();
+        Record record = marcConverterWithAuthorityLookup.authLookups(marcRecord);
         // This assumes the fixture data has no fields that resolve URIs
         assertEquals(record, marcRecord);
     }
 
     @Test
-    public void authLookupInit() throws Exception {
-        MarcConverterWithAuthorityLookup.authLookupInit();
-        assertNotNull(MarcConverterWithAuthorityLookup.authLookup);
+    public void authDBConnection() throws Exception {
+        marcConverterWithAuthorityLookup.authDBProperties = authDBProperties;
+        AuthDBConnection conn = marcConverterWithAuthorityLookup.authDBConnection();
+        assertNotNull(conn);
+        assertThat(conn, instanceOf(AuthDBConnection.class));
+    }
+
+    @Test
+    public void authDBConnection_setAuthDBProperties() throws IOException, SQLException {
+        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
+        assertNull(marcConverterWithAuthorityLookup.authDBProperties);
+        assertNull(marcConverterWithAuthorityLookup.authDBConnection);
+        marcConverterWithAuthorityLookup.authDBConnection();
+        assertNotNull(marcConverterWithAuthorityLookup.authDBProperties);
+        assertEquals(authDBProperties, marcConverterWithAuthorityLookup.authDBProperties);
+    }
+
+    @Test
+    public void authDBLookup() throws Exception {
+        marcConverterWithAuthorityLookup.authDBConnection = authDBConnection;
+        AuthDBLookup lookup = marcConverterWithAuthorityLookup.authDBLookup();
+        assertNotNull(lookup);
+        assertThat(lookup, instanceOf(AuthDBLookup.class));
+    }
+
+    @Test
+    public void authDBLookup_setAuthDBProperties() throws IOException, SQLException {
+        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
+        doReturn(authDBConnection).when(marcConverterWithAuthorityLookup).authDBConnection();
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
+        assertNull(marcConverterWithAuthorityLookup.authDBConnection);
+        marcConverterWithAuthorityLookup.authDBLookup();
+        assertNotNull(marcConverterWithAuthorityLookup.authDBConnection);
+        assertEquals(authDBConnection, marcConverterWithAuthorityLookup.authDBConnection);
+    }
+
+    @Test
+    public void authLookupInit_setAuthDBLookup() throws Exception {
+        // Custom mocks for this test
+        marcConverterWithAuthorityLookup = spy(MarcConverterWithAuthorityLookup.class);
+        doReturn(authDBLookup).when(marcConverterWithAuthorityLookup).authDBLookup();
+        // Test the authLookupInit()
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
+        marcConverterWithAuthorityLookup.authLookupInit();
+        assertNotNull(marcConverterWithAuthorityLookup.authDBLookup);
+        assertThat(marcConverterWithAuthorityLookup.authDBLookup, instanceOf(AuthDBLookup.class));
     }
 
     @Test
     public void authLookupClose() throws Exception {
-        MarcConverterWithAuthorityLookup.authLookupInit();
-        assertNotNull(MarcConverterWithAuthorityLookup.authLookup);
-        MarcConverterWithAuthorityLookup.authLookupClose();
-        assertNull(MarcConverterWithAuthorityLookup.authLookup);
+        authLookupMocks();
+        assertNotNull(marcConverterWithAuthorityLookup.authDBLookup);
+        marcConverterWithAuthorityLookup.authLookupClose();
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
+    }
+
+    @Test
+    public void authLookupCloseWithoutInit() throws SQLException {
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
+        marcConverterWithAuthorityLookup.authLookupClose();
+        assertNull(marcConverterWithAuthorityLookup.authDBLookup);
+    }
+
+    @Test
+    public void setAuthDBProperties() {
+        CommandLine cmd = mockCommandLine(serverConfPath);
+        assertNull(marcConverterWithAuthorityLookup.authDBProperties);
+        marcConverterWithAuthorityLookup.setAuthDBProperties(cmd);
+        assertNotNull(marcConverterWithAuthorityLookup.authDBProperties);
+    }
+
+    @Test
+    public void setAuthDBPropertiesUsesDefaultProperties() throws IOException, SQLException {
+        CommandLine cmd = mock(CommandLine.class);
+        when(cmd.hasOption("p")).thenReturn(false);
+        assertNull(marcConverterWithAuthorityLookup.authDBProperties);
+        marcConverterWithAuthorityLookup.setAuthDBProperties(cmd);
+        assertNotNull(marcConverterWithAuthorityLookup.authDBProperties);
+        assertEquals(authDBProperties, marcConverterWithAuthorityLookup.authDBProperties);
+    }
+
+    @Test
+    public void failSetAuthDBProperties() {
+        exit.expectSystemExitWithStatus(1);
+        // capture the STDERR message
+        PrintStream stderr = System.err;
+        ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(errContent));
+        // call setAuthDBProperties with a missing file path
+        assertNull(marcConverterWithAuthorityLookup.authDBProperties);
+        CommandLine cmd = mockCommandLine("missing-server.conf");
+        marcConverterWithAuthorityLookup.setAuthDBProperties(cmd);
+        // check the STDERR message
+        String err = "ERROR: Failure to set Authority-DB properties.";
+        assertThat(errContent.toString(), containsString(err));
+        System.setErr(stderr);
+    }
+
+    @Test
+    public void printHelp() {
+        PrintStream stdout = System.out;
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        String className = "testClassName";
+        Options options = new Options();
+        options.addOption("h", "help");
+        MarcConverterWithAuthorityLookup.printHelp(className, options);
+        assertThat(outContent.toString(), containsString(className));
+        assertThat(outContent.toString(), containsString("help"));
+        System.setOut(stdout);
     }
 
 }

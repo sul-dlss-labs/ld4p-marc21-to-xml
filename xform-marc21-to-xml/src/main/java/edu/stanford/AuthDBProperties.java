@@ -1,5 +1,7 @@
 package edu.stanford;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,6 +32,10 @@ class AuthDBProperties {
 
     public AuthDBProperties(String propertyFile) throws IOException {
         Properties properties = loadPropertyFile(propertyFile);
+        initDataSourceProperties(properties);
+    }
+
+    public AuthDBProperties(Properties properties) {
         initDataSourceProperties(properties);
     }
 
@@ -76,6 +82,31 @@ class AuthDBProperties {
         this.userPass = properties.getProperty("PASS");
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof AuthDBProperties))
+            return false;
+        if (obj == this)
+            return true;
+        AuthDBProperties other = (AuthDBProperties) obj;
+        return new EqualsBuilder().
+                append(this.server, other.server).
+                append(this.service, other.service).
+                append(this.userName, other.userName).
+                append(this.userPass, other.userPass).
+                isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(3, 11).
+                append(this.server).
+                append(this.service).
+                append(this.userName).
+                append(this.userPass).
+                toHashCode();
+    }
+
     private Properties loadPropertyFile(String propertyFile) throws IOException {
         try {
             InputStream iStream = new FileInputStream(propertyFile);
@@ -107,4 +138,6 @@ class AuthDBProperties {
         log.debug( props.toString() );
         return props;
     }
+
+
 }

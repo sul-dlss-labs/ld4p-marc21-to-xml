@@ -4,19 +4,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.marc4j.MarcStreamReader;
 import org.marc4j.marc.Record;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
@@ -24,64 +16,52 @@ import static org.junit.Assert.*;
 /**
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({AuthDBConnection.class})
 public class AuthDBLookupTest {
 
-    // For additional test data, consider the marc4j data at
-    // https://github.com/marc4j/marc4j/tree/master/test/resources
-    private final String marcFileResource = "/one_record.mrc";
-    private final String marcFilePath = getClass().getResource(marcFileResource).getFile();
-
-    private Record marcRecord = null;
-    private AuthDBLookup authLookup = null;
-
-    private Statement mockStatement = null;
-    private Connection mockConnection = null;
-
-    private void mockConnection() throws SQLException, IOException {
-        mockConnection = Mockito.mock(Connection.class);
-        PowerMockito.mockStatic(AuthDBConnection.class);
-        Mockito.when(AuthDBConnection.open()).thenReturn(mockConnection);
-    }
+    private MarcTestUtils marcTestUtils;
+    private Record marcRecord;
+    private AuthDBLookup authLookup;
 
     @Before
-    public void setUp() throws IOException, SQLException {
-        mockConnection();
-        // Read a MARC record
-        MarcStreamReader marcReader = new MarcStreamReader(new FileInputStream(marcFilePath));
-        marcRecord = marcReader.next();
-        authLookup = new AuthDBLookup();
+    public void setUp() throws Exception {
+        marcTestUtils = new MarcTestUtils();
+        marcRecord = marcTestUtils.getMarcRecord();
+        authLookup = SqliteTestUtils.sqliteAuthDBLookup();
     }
 
     @After
     public void tearDown() throws Exception {
-        mockStatement = null;
-        mockConnection = null;
+        marcTestUtils.deleteOutputPath();
+        marcTestUtils = null;
+        authLookup = null;
     }
 
     @Test
     public void openConnection() throws IOException, SQLException {
+        assertNull(authLookup.dbConnection);
         authLookup.openConnection();
-        assertThat(authLookup.authDB, instanceOf(Connection.class));
+        assertThat(authLookup.dbConnection, instanceOf(Connection.class));
     }
 
     @Test
     public void openConnectionIdempotent() throws IOException, SQLException {
+        assertNull(authLookup.dbConnection);
         authLookup.openConnection();
-        assertThat(authLookup.authDB, instanceOf(Connection.class));
-        Connection conn1 = authLookup.authDB;
+        assertThat(authLookup.dbConnection, instanceOf(Connection.class));
+        Connection conn1 = authLookup.dbConnection;
         authLookup.openConnection();
-        assertThat(authLookup.authDB, instanceOf(Connection.class));
-        Connection conn2 = authLookup.authDB;
+        assertThat(authLookup.dbConnection, instanceOf(Connection.class));
+        Connection conn2 = authLookup.dbConnection;
         assertEquals(conn1, conn2);
     }
 
     @Test
     public void closeConnection() throws Exception {
+        assertNull(authLookup.dbConnection);
         authLookup.openConnection();
+        assertThat(authLookup.dbConnection, instanceOf(Connection.class));
         authLookup.closeConnection();
-        assertNull(authLookup.authDB);
+        assertNull(authLookup.dbConnection);
     }
 
     @Test

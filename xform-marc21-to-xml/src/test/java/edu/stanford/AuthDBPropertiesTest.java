@@ -43,13 +43,13 @@ public class AuthDBPropertiesTest {
         FileUtils.deleteDirectory(tmpDir);
     }
 
-    public void setServerConfFile() {
+    private void setServerConfFile() {
         Class cls = AuthDBProperties.class;
         URL path = cls.getResource(serverConfResourceName);
         serverConfFile = new File(path.getFile());
     }
 
-    public void setServerConf() throws IOException {
+    private void setServerConf() throws IOException {
         Class cls = AuthDBProperties.class;
         InputStream iStream = cls.getResourceAsStream(serverConfResourceName);
         serverConf = new Properties();
@@ -67,7 +67,17 @@ public class AuthDBPropertiesTest {
     }
 
     @Test
-    public void testConstructorWithString() throws IOException {
+    public void testConstructorWithProperties() throws IOException {
+        setServerConf();
+        AuthDBProperties customProps = new AuthDBProperties(serverConf);
+        assertEquals(serverConf.getProperty("USER"), customProps.getUserName());
+        assertEquals(serverConf.getProperty("PASS"), customProps.getUserPass());
+        assertEquals(serverConf.getProperty("SERVER"), customProps.getServer());
+        assertEquals(serverConf.getProperty("SERVICE_NAME"), customProps.getService());
+    }
+
+    @Test
+    public void testConstructorWithFileString() throws IOException {
         setServerConf();
         setServerConfFile();
         FileUtils.copyFileToDirectory(serverConfFile, tmpDir);
@@ -139,5 +149,85 @@ public class AuthDBPropertiesTest {
             throw(e.getTargetException());
         }
     }
+
+
+    // Equality tests
+
+    @Test
+    public void testEqualsIsTrue() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        assertTrue(p1.equals(p2));
+        p1.setServer("server");
+        p2.setServer("server");
+        assertTrue(p1.equals(p2) && p2.equals(p1));
+        assertTrue(p1.hashCode() == p2.hashCode());
+    }
+
+    @Test
+    public void testEqualsIsFalse() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        p2.setServer("serverB");
+        assertFalse(p1.equals(p2));
+        assertFalse(p1.hashCode() == p2.hashCode());
+    }
+
+    @Test
+    public void testEqualsIsFalseForNulls() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        assertFalse(p1.equals(null));
+    }
+
+    @Test
+    public void testEqualsIsFalseForOtherObject() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        assertFalse(p1.equals(new Object()));
+    }
+
+    @Test
+    public void testEqualsIsFalseForOtherServerNull() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        p1.setServer("server");
+        assertFalse(p1.equals(p2));
+    }
+
+    @Test
+    public void testEqualsIsFalseForOtherServiceNull() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        p1.setServer("server");
+        p2.setServer("server");
+        p1.setService("serviceA");
+        assertFalse(p1.equals(p2));
+    }
+
+    @Test
+    public void testEqualsIsFalseForOtherUserNull() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        p1.setServer("server");
+        p2.setServer("server");
+        p1.setService("service");
+        p2.setService("service");
+        p1.setUserName("userA");
+        assertFalse(p1.equals(p2));
+    }
+
+    @Test
+    public void testEqualsIsFalseForOtherPassNull() throws IOException {
+        AuthDBProperties p1 = new AuthDBProperties();
+        AuthDBProperties p2 = new AuthDBProperties();
+        p1.setServer("server");
+        p2.setServer("server");
+        p1.setService("service");
+        p2.setService("service");
+        p1.setUserName("user");
+        p2.setUserName("user");
+        p1.setUserPass("passA");
+        assertFalse(p1.equals(p2));
+    }
+
 }
 

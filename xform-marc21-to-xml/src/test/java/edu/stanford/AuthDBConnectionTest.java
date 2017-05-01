@@ -1,10 +1,13 @@
 package edu.stanford;
 
-import oracle.jdbc.pool.OracleDataSource;
-
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -17,21 +20,50 @@ public class AuthDBConnectionTest {
     Packaged code config:  src/main/resources/server.conf
      */
 
-    @Test
-    public void setDataSource() throws Exception {
-        // Note about Field.get(Object obj):
-        // If the underlying field is a static field, the obj argument is ignored; it may be null.
-        Field field = AuthDBConnection.class.getDeclaredField("ds");
-        field.setAccessible(true);
-        assertNull(field.get(null));
-        AuthDBConnection.setDataSource();
-        assertNotNull(field.get(null));
-        assertThat(field.get(null), instanceOf(OracleDataSource.class));
+    private AuthDBProperties authDBProperties;
+    private AuthDBConnection authDBConnection;
+
+    @Before
+    public void setUp() throws IOException, SQLException {
+        authDBProperties = new AuthDBProperties();
+        authDBConnection = SqliteTestUtils.sqliteAuthDBConnection();
+    }
+
+    @After
+    public void tearDown() {
+        authDBProperties = null;
+        authDBConnection = null;
     }
 
     @Test
-    public void setDataSourceCache() throws Exception {
-        // TODO
+    public void setAuthDBProperties() {
+        authDBConnection.setAuthDBProperties(authDBProperties);
+        assertNotNull(authDBConnection.authDBProperties);
+        assertSame(authDBConnection.authDBProperties, authDBProperties);
+    }
+
+
+    @Test
+    public void open() throws IOException, SQLException {
+        Connection conn = authDBConnection.open();
+        assertNotNull(conn);
+        assertThat(conn, instanceOf(Connection.class));
+    }
+
+    @Test
+    public void dataSource() throws IOException, SQLException {
+        DataSource dataSource = authDBConnection.dataSource();
+        assertNotNull(dataSource);
+        assertThat(dataSource, instanceOf(DataSource.class));
+    }
+
+    @Test
+    public void dataSourceCache() throws Exception {
+        Properties cacheProps = authDBConnection.dataSourceCache();
+        assertEquals(cacheProps.getProperty("MinLimit"), "1");
+        assertEquals(cacheProps.getProperty("InitialLimit"), "1");
+        assertEquals(cacheProps.getProperty("AbandonedConnectionTimeout"), "100");
+        assertEquals(cacheProps.getProperty("PropertyCheckInterval"), "80");
     }
 
 }

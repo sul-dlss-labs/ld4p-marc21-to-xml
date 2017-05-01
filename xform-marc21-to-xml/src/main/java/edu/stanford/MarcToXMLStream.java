@@ -1,12 +1,13 @@
 package edu.stanford;
 
+import org.apache.commons.cli.*;
 import org.marc4j.MarcReader;
 import org.marc4j.MarcStreamReader;
 import org.marc4j.MarcWriter;
 import org.marc4j.MarcXmlWriter;
 import org.marc4j.marc.Record;
 
-import java.io.*;
+import java.io.IOException;
 import java.sql.SQLException;
 
 /**
@@ -18,28 +19,56 @@ import java.sql.SQLException;
  */
 class MarcToXMLStream extends MarcConverterWithAuthorityLookup {
 
-    private static MarcReader marcReader = new MarcStreamReader(System.in);
-    private static MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
-
-    public static void setMarcReader(MarcReader marcReader) {
-        MarcToXMLStream.marcReader = marcReader;
+    public static void main (String [] args) throws IOException, SQLException, ParseException {
+        MarcToXMLStream marcToXMLStream = new MarcToXMLStream();
+        marcToXMLStream.parseArgs(args);
+        marcToXMLStream.authLookupInit();
+        marcToXMLStream.convertRecords();
+        marcToXMLStream.authLookupClose();
     }
 
-    public static void setMarcWriter(MarcWriter marcWriter) {
-        MarcToXMLStream.marcWriter = marcWriter;
-    }
-
-    public static void main (String [] args) throws IOException, SQLException {
-        convertRecords();
-        authLookupClose();
-    }
-
-    static void convertRecords() throws IOException, SQLException {
+    void convertRecords() throws IOException, SQLException {
         while (marcReader.hasNext()) {
             Record record = marcReader.next();
             marcWriter.write(authLookups(record));
         }
         marcWriter.close();
+    }
+
+    private MarcReader marcReader = new MarcStreamReader(System.in);
+    private MarcWriter marcWriter = new MarcXmlWriter(System.out, true);
+
+    public void setMarcReader(MarcReader reader) {
+        marcReader = reader;
+    }
+
+    public void setMarcWriter(MarcWriter writer) {
+        marcWriter = writer;
+    }
+
+    static String className = MarcToXMLStream.class.getName();
+
+    // Apache Commons-CLI Options
+    // https://commons.apache.org/proper/commons-cli/introduction.html
+    CommandLine cmd = null;
+    static Options options = setOptions();
+
+    static Options setOptions() {
+        Options opts = new Options();
+        MarcConverterWithAuthorityLookup.addOptions(opts);
+        return opts;
+    }
+
+    void parseArgs(String [] args) throws ParseException {
+        CommandLineParser parser = new DefaultParser();
+        cmd = parser.parse(options, args);
+        if (cmd.hasOption('h')) {
+            // Print the help message and exit
+            printHelp(className, options);
+            System.exit(0);
+        }
+        // Parse optional options
+        setAuthDBProperties(cmd);
     }
 
 }
