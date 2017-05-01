@@ -1,5 +1,7 @@
 package edu.stanford;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -82,33 +84,27 @@ class AuthDBProperties {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
+        if (!(obj instanceof AuthDBProperties))
             return false;
-        }
-        if (!AuthDBProperties.class.isAssignableFrom(obj.getClass())) {
-            return false;
-        }
-        final AuthDBProperties other = (AuthDBProperties) obj;
-        if ((this.server == null) ? (other.server != null) : !this.server.equals(other.server))
-            return false;
-        if ((this.service == null) ? (other.service != null) : !this.service.equals(other.service))
-            return false;
-        if ((this.userName == null) ? (other.userName != null) : !this.userName.equals(other.userName))
-            return false;
-        if ((this.userPass == null) ? (other.userPass != null) : !this.userPass.equals(other.userPass))
-            return false;
-        return true;
+        if (obj == this)
+            return true;
+        AuthDBProperties other = (AuthDBProperties) obj;
+        return new EqualsBuilder().
+                append(this.server, other.server).
+                append(this.service, other.service).
+                append(this.userName, other.userName).
+                append(this.userPass, other.userPass).
+                isEquals();
     }
 
     @Override
     public int hashCode() {
-        int i = 42;
-        int hash = i;
-        hash = i * hash + this.server.hashCode();
-        hash = i * hash + this.service.hashCode();
-        hash = i * hash + this.userName.hashCode();
-        hash = i * hash + this.userPass.hashCode();
-        return hash;
+        return new HashCodeBuilder(3, 11).
+                append(this.server).
+                append(this.service).
+                append(this.userName).
+                append(this.userPass).
+                toHashCode();
     }
 
     private Properties loadPropertyFile(String propertyFile) throws IOException {
