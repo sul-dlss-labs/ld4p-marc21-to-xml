@@ -4,7 +4,7 @@ jdk:
 
 cache:
   directories:
-    - '$HOME/.m2/repository'
+  - '$HOME/.m2/repository'
 
 before_install:
   - source .travis/maven_settings.sh
@@ -20,3 +20,15 @@ script:
 
 # save cache
 
+deploy:
+  provider: releases
+  api_key:
+    secure: XFUX/ply4z1kKtbnrry8cMXDgeW3C/8RB9pXBRA3udu/kNWT/33prx2T0zv2tczXK7UDtHQF2oi173icFcXx9/suzP65vOGqCCd+C9g9RSNIfOiLac53CIgO8e2sLUouNFFnDM54aEXxnsh5EQPj3wIL3yfVpkdVfDkXvJMCvW9vwqWCmkuX+kb2/2d2LlP/R4mDA5RF9WwgZgWmobPW85lGTGXYRMRAbXtO1f76f6Sioc88AH6x+9A2TgltccI2UuhVky3p0nY5+ymvjGOPVyy2NjoyCDfPIOT3uIagmJdgjliuh9nvPv58SdRA3GCDCAUz9GRR3iU14DpnygcMf/p+P53QEHbQB20vw3HYmJTeDc07Ypsu2YJNzkaY3eP+AyS3yNhJzxeDCWHEpNrpTyDL3Zh6BtfpwSGF7oofyThwwWWiTqzn1nz96l+3hT3g7fxaM9FoHrBvh4M37eUqPhqMGyekR8mf+U4XLsWfJ/lylVuIRlpzcmKYAkW/WqAmeeNMeAIeI8WUgY6XLKrJPDpbiL3TOki+P6VhPm6bT+bPmCkQKXz3k0te/LOzh53w4wBuut7cG1LpBYpQ4R1pal5NCcV0cHLEA9NhYxEPnX0cssE5oN4tz6gTMpXSrONkXwk76VIqd2fe7xdNEzhEm4MBVwZKy2TOwK+sPdhusYg=
+  file: lib/xform-marc21-to-xml-jar-with-dependencies.jar
+  skip_cleanup: true
+  on:
+    repo: sul-dlss/ld4p-marc21-to-xml
+    branch: master
+    # When set to true, the application is deployed when a tag is applied to the commit.
+    # This causes the branch condition to be ignored.
+    # tags: true
