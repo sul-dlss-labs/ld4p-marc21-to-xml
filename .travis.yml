@@ -31,4 +31,4 @@ deploy:
     branch: master
     # When set to true, the application is deployed when a tag is applied to the commit.
     # This causes the branch condition to be ignored.
-    # tags: true
+    tags: true
